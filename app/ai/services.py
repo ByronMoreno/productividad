@@ -307,3 +307,111 @@ class AIService:
             print(f"Error simulando debate multi-agente con OpenAI API: {e}. Usando Mock local.")
             return AIService.mock_agent_debate(energy_limit, pending_tasks)
 
+    @staticmethod
+    def mock_generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date) -> list:
+        """
+        Generador local de Time Blocking basado en reglas.
+        Construye una agenda a partir de las 09:00 AM intercalando descansos de 15 minutos.
+        """
+        from datetime import time, timedelta, datetime
+        blocks = []
+        
+        # Empezar a las 09:00 AM
+        current_dt = datetime.combine(selected_date, time(9, 0))
+        
+        # Filtrar tareas aptas según energía si no están en progreso
+        max_energy = {1: 2, 2: 4, 3: 5}[energy_limit]
+        tasks_to_schedule = [t for t in pending_tasks if t.energy <= max_energy or t.status == 'PROGRESS']
+        
+        # Si no hay tareas aptas, programar al menos la de hoy
+        if not tasks_to_schedule and pending_tasks:
+            tasks_to_schedule = [pending_tasks[0]]
+            
+        for task in tasks_to_schedule:
+            # Duración de la tarea (mínimo 30 min)
+            duration = max(task.estimated_time or 30, 30)
+            
+            start_t = current_dt.time()
+            end_dt = current_dt + timedelta(minutes=duration)
+            end_t = end_dt.time()
+            
+            blocks.append({
+                "title": task.title,
+                "task_id": task.id,
+                "start_time": start_t.strftime('%H:%M'),
+                "end_time": end_t.strftime('%H:%M')
+            })
+            
+            # Mover el cursor de tiempo (tarea + 15 min de descanso zen)
+            current_dt = end_dt + timedelta(minutes=15)
+            
+        # Si no hay tareas agendadas, crear un bloque libre de planificación
+        if not blocks:
+            blocks.append({
+                "title": "Planificación y Lectura Ligera",
+                "task_id": None,
+                "start_time": "09:00",
+                "end_time": "10:00"
+            })
+            blocks.append({
+                "title": "Descanso y Meditación Zen",
+                "task_id": None,
+                "start_time": "10:15",
+                "end_time": "11:00"
+            })
+            
+        return blocks
+
+    @staticmethod
+    def generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date) -> list:
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date)
+            
+        client = OpenAI(api_key=api_key)
+        energy_desc = {1: "Baja 🔋", 2: "Media ⚡", 3: "Alta 🚀"}[energy_limit]
+        
+        tasks_summary = []
+        for t in pending_tasks:
+            tasks_summary.append(f"- ID: {t.id} | {t.title} [Estimado: {t.estimated_time}m, Energía: {t.energy}/5]")
+        tasks_str = "\n".join(tasks_summary) if tasks_summary else "No hay tareas pendientes."
+        
+        system_prompt = (
+            "Eres el planificador de tiempo zen de Antigravity OS.\n"
+            "Tu objetivo es crear el itinerario de Time Blocking para el día de hoy.\n"
+            "Debes organizar las tareas del usuario en bloques lógicos, empezando a las 09:00 AM.\n"
+            "Instrucciones:\n"
+            "- Respeta el límite de energía actual del usuario. No agendes tareas pesadas si su energía es Baja.\n"
+            "- Intercala descansos zen de 10 a 15 minutos entre tareas.\n"
+            "- Si una tarea ya está en proceso (PROGRESS), agéndala primero.\n"
+            "- Responde con un objeto JSON que contenga la llave \"blocks\" con el array de bloques:\n"
+            "{\n"
+            "  \"blocks\": [\n"
+            "    {\n"
+            "      \"title\": \"Nombre de la actividad o descanso\",\n"
+            "      \"task_id\": 123 (o null si es un bloque libre/descanso),\n"
+            "      \"start_time\": \"09:00\",\n"
+            "      \"end_time\": \"10:15\"\n"
+            "    }\n"
+            "  ]\n"
+            "}\n"
+        )
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Organiza mi día. Energía: {energy_desc}. Tareas disponibles:\n{tasks_str}"}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.3
+            )
+            result_content = response.choices[0].message.content
+            data = json.loads(result_content)
+            return data.get("blocks", AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date))
+        except Exception as e:
+            print(f"Error generando Time Blocking con OpenAI API: {e}. Usando generador local.")
+            return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date)
+
+

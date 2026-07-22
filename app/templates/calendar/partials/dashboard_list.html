@@ -1,0 +1,17 @@
+{% if blocks %}
+    {% for block in blocks %}
+        <div class="time-block-item d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <strong class="text-dark" style="font-size: 0.9rem;">{{ block.start_time.strftime('%H:%M') }} - {{ block.end_time.strftime('%H:%M') }}</strong>
+                <div class="text-zen-muted mt-1" style="font-size: 0.85rem;">{{ block.title or (block.task.title if block.task else 'Bloque Libre') }}</div>
+            </div>
+            {% if block.task %}
+                <span class="badge bg-light text-primary border border-secondary" style="font-size: 0.7rem;">Tarea</span>
+            {% else %}
+                <span class="badge bg-light text-zen-muted border border-secondary" style="font-size: 0.7rem;">Libre</span>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p class="text-zen-muted text-center py-5 small mb-0">No tienes bloques de tiempo planificados para hoy.</p>
+{% endif %}
