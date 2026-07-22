@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Light Theme (Estilo Stripe/Notion Premium) */
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --primary: #2563eb; /* Azul Stripe */
+    --primary-hover: #1d4ed8;
+    --secondary: #475569;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    --radius: 10px;
+    --font-sans: 'Inter', sans-serif;
+}
+
+[data-theme="dark"] {
+    /* Dark Theme (Estilo Linear/Vercel) */
+    --background: #09090b;
+    --surface: #09090b;
+    --surface-hover: #18181b;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary: #a1a1aa;
+    --text: #f4f4f5;
+    --text-muted: #a1a1aa;
+    --border: #27272a;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+    font-family: var(--font-sans);
+    letter-spacing: -0.015em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Anular estilos de Bootstrap para un acabado Flat/Minimalista */
+.navbar {
+    background-color: var(--surface) !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding: 16px 0 !important;
+    box-shadow: var(--shadow) !important;
+}
+
+.navbar-brand {
+    color: var(--text) !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    letter-spacing: -0.02em;
+}
+
+.navbar-nav .nav-link {
+    color: var(--text-muted) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    padding: 6px 12px !important;
+    border-radius: 6px;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--text) !important;
+    background-color: var(--surface-hover);
+}
+
+/* Tarjetas y Contenedores */
+.zen-card, .card {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 24px !important;
+    box-shadow: var(--shadow) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.zen-card:hover, .card:hover {
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 12px 0 rgba(0,0,0,0.03) !important;
+}
+
+/* Textos */
+.text-zen-muted, .text-muted {
+    color: var(--text-muted) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text) !important;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Botones */
+.btn {
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 16px !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.btn-primary, .btn-zen {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover, .btn-zen:hover {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+}
+
+.btn-outline-secondary, .btn-outline-light {
+    border-color: var(--border) !important;
+    color: var(--text-muted) !important;
+    background-color: var(--surface) !important;
+}
+
+.btn-outline-secondary:hover, .btn-outline-light:hover {
+    background-color: var(--surface-hover) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+.btn-brain-off {
+    background-color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: #ffffff !important;
+}
+
+.btn-brain-off:hover {
+    opacity: 0.9 !important;
+}
+
+/* Kanban */
+.kanban-col {
+    background-color: var(--surface-hover) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 16px !important;
+    min-height: 520px;
+}
+
+.kanban-task {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-bottom: 12px !important;
+    box-shadow: var(--shadow) !important;
+}
+
+.kanban-task:hover {
+    border-color: var(--primary) !important;
+}
+
+/* Time blocking list */
+.time-block-item {
+    border-left: 3px solid var(--primary) !important;
+    background-color: var(--surface) !important;
+    border-radius: 0 8px 8px 0 !important;
+    padding: 14px 18px !important;
+    margin-bottom: 10px !important;
+    border-top: 1px solid var(--border) !important;
+    border-right: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+/* Inputs y Selectores */
+.form-control, .form-select {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: 6px !important;
+    padding: 10px 14px !important;
+    font-size: 0.875rem !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Chat */
+#chat-history {
+    border-radius: 8px !important;
+    background-color: var(--surface-hover) !important;
+    border: 1px solid var(--border) !important;
+    padding: 16px !important;
+}
+
+/* Modales */
+.modal-content {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+}
+
+.modal-header, .modal-footer {
+    border-color: var(--border) !important;
+}
+
+/* Grupo de Energía Segmentado */
+.energy-group {
+    background-color: var(--surface-hover) !important;
+    padding: 4px !important;
+    border-radius: 8px !important;
+}
+
+.energy-group .btn {
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    background-color: transparent !important;
+    border-radius: 6px !important;
+}
+
+.energy-group .btn:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+    color: var(--text) !important;
+}
+
+.energy-group .btn.active-1 {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.energy-group .btn.active-2 {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.energy-group .btn.active-3 {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+/* Badges */
+.badge {
+    padding: 5px 10px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+}
+
+.badge.bg-light {
+    background-color: var(--surface-hover) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* Theme Toggle */
+.theme-toggle-btn {
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+    background-color: var(--surface) !important;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.theme-toggle-btn:hover {
+    color: var(--text) !important;
+    background-color: var(--surface-hover) !important;
+}
+
+/* Lucide */
+svg.lucide {
+    stroke-width: 1.75;
+}

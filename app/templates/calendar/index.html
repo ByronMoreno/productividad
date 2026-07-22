@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Formulario e Información -->
+    <div class="col-lg-4">
+        <div class="zen-card">
+            <h2 class="h4 mb-3"><i data-lucide="clock" class="me-2 text-success"></i>Time Blocking</h2>
+            <p class="text-zen-muted small">Planifica tu día en bloques de tiempo dedicados para evitar la fatiga mental y el cambio de contexto.</p>
+            
+            <form action="{{ url_for('calendar.add') }}" method="POST" class="mt-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Fecha</label>
+                    <input type="date" class="form-control" name="date" value="{{ selected_date.isoformat() }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Título del bloque (opcional)</label>
+                    <input type="text" class="form-control" name="title" placeholder="Ej: Ejercicio, Almuerzo, Descanso">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Asociar Tarea (opcional)</label>
+                    <select class="form-select" name="task_id">
+                        <option value="">Ninguna (Bloque Libre)</option>
+                        {% for task in tasks %}
+                            <option value="{{ task.id }}">{{ task.title }} ({{ task.estimated_time }} min)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Inicio</label>
+                        <input type="time" class="form-control" name="start_time" required>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Fin</label>
+                        <input type="time" class="form-control" name="end_time" required>
+                    </div>
+                </div>
+
+                <button class="btn btn-zen w-100 mt-2" type="submit">Crear Bloque</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Selector de Fecha y Listado de Bloques -->
+    <div class="col-lg-8">
+        <div class="zen-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h4 mb-0 fw-bold">Mi Agenda</h2>
+                <form action="{{ url_for('calendar.index') }}" method="GET" class="d-flex gap-2">
+                    <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_date.isoformat() }}" onchange="this.form.submit()">
+                </form>
+            </div>
+            
+            <div id="calendar-blocks-list">
+                {% include "calendar/partials/list.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold mb-0">Segundo Cerebro</h1>
+        <p class="text-zen-muted small mb-0">Base de conocimiento. Documenta tus soluciones técnicas y asócialas a tus tareas.</p>
+    </div>
+    <a href="{{ url_for('knowledge.add') }}" class="btn btn-zen">
+        <i data-lucide="plus" class="me-2"></i>Nueva Nota
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-secondary"><i data-lucide="search" class="text-zen-muted"></i></span>
+            <input type="text" 
+                   name="q" 
+                   class="form-control bg-white text-dark border-secondary border-start-0" 
+                   placeholder="Buscar en el segundo cerebro..." 
+                   hx-get="{{ url_for('knowledge.index') }}" 
+                   hx-trigger="keyup changed delay:300ms" 
+                   hx-target="#knowledge-list" 
+                   hx-swap="innerHTML"
+                   value="{{ query or '' }}">
+        </div>
+    </div>
+</div>
+
+<div id="knowledge-list">
+    {% include "knowledge/partials/list.html" %}
+</div>
+{% endblock %}

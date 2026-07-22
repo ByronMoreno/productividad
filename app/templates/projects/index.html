@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold mb-0">Proyectos y Áreas</h1>
+        <p class="text-zen-muted small mb-0">Divide tus actividades en compartimentos claros (Docencia, Bolsa, Salud, etc.).</p>
+    </div>
+    <button class="btn btn-zen" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+        <i data-lucide="plus" class="me-2"></i>Nuevo Proyecto
+    </button>
+</div>
+
+<div id="projects-list" class="mt-4">
+    {% include "projects/partials/list.html" %}
+</div>
+
+<!-- Modal para Crear Proyecto -->
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Nuevo Proyecto / Área</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form hx-post="{{ url_for('projects.add') }}" 
+                  hx-target="#projects-list" 
+                  hx-swap="innerHTML"
+                  hx-on::after-request="bootstrap.Modal.getInstance(document.getElementById('createProjectModal')).hide(); this.reset();">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre del Proyecto</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descripción</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Color de Identificación</label>
+                        <input type="color" class="form-control form-control-color w-100" name="color_hex" value="#2563eb" style="height: 40px; padding: 2px;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-zen">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

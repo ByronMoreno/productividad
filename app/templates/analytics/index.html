@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="display-6 fw-bold mb-0">Dashboard de Enfoque y Analíticas</h1>
+    <p class="text-zen-muted small mb-0">Monitorea tu carga de trabajo y previene el burnout.</p>
+</div>
+
+<!-- Alerta de Burnout de la IA -->
+<div class="zen-card mb-4" style="border-left: 4px solid var(--accent) !important;">
+    <h3 class="h5 fw-bold text-dark mb-2"><i data-lucide="brain" class="text-primary me-2"></i>Revisión y Recomendación de la IA</h3>
+    <p class="mb-0 text-dark" style="font-size: 0.95rem;">{{ burnout_alert }}</p>
+</div>
+
+<div class="row g-4">
+    <!-- Tarjetas de Estadísticas -->
+    <div class="col-md-3">
+        <div class="zen-card text-center py-4">
+            <div class="text-zen-muted small mb-2"><i data-lucide="hourglass" class="me-1 text-primary"></i>Tiempo Enfocado</div>
+            <div class="display-5 fw-bold text-dark">{{ total_focus_minutes }} <span class="fs-6 text-muted">min</span></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="zen-card text-center py-4">
+            <div class="text-zen-muted small mb-2"><i data-lucide="zap" class="me-1 text-warning"></i>Interrupciones</div>
+            <div class="display-5 fw-bold text-dark">{{ total_interruptions }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="zen-card text-center py-4">
+            <div class="text-zen-muted small mb-2"><i data-lucide="frown" class="me-1 text-danger"></i>Distracciones</div>
+            <div class="display-5 fw-bold text-dark">{{ total_distractions }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="zen-card text-center py-4">
+            <div class="text-zen-muted small mb-2"><i data-lucide="check-circle-2" class="me-1 text-success"></i>Tasa de Éxito</div>
+            <div class="display-5 fw-bold text-dark">{{ completion_rate }}%</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Panel del Estado Mental y Estrés -->
+    <div class="col-md-6">
+        <div class="zen-card h-100">
+            <h3 class="h5 fw-bold mb-3"><i data-lucide="activity" class="me-2 text-danger"></i>Indicador de Carga Mental</h3>
+            <div class="d-flex align-items-center gap-3 my-3">
+                <span class="fs-6 text-zen-muted">Nivel de Estrés Estimado:</span>
+                <span class="badge bg-light text-dark border border-secondary fs-6 py-2 px-3">{{ stress_level }}</span>
+            </div>
+            <p class="text-zen-muted small mb-0 mt-4" style="font-size: 0.8rem;">
+                * El nivel de estrés se calcula de forma automatizada en base a la relación entre sesiones de trabajo profundo finalizadas y las interrupciones o bloqueos registrados.
+            </p>
+        </div>
+    </div>
+
+    <!-- Panel de Actividad de Tareas de la Semana -->
+    <div class="col-md-6">
+        <div class="zen-card h-100">
+            <h3 class="h5 fw-bold mb-3"><i data-lucide="check-square" class="me-2 text-primary"></i>Actividad de Tareas (Últimos 7 días)</h3>
+            <ul class="list-group list-group-flush mt-3">
+                <li class="list-group-item bg-transparent text-dark d-flex justify-content-between align-items-center py-3 px-0">
+                    <span class="text-zen-muted">Tareas registradas en la semana</span>
+                    <span class="fw-bold">{{ created_count }}</span>
+                </li>
+                <li class="list-group-item bg-transparent text-dark d-flex justify-content-between align-items-center py-3 px-0">
+                    <span class="text-zen-muted">Tareas completadas</span>
+                    <span class="fw-bold text-success">{{ completed_count }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

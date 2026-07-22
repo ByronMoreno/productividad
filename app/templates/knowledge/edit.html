@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="zen-card">
+            <h2 class="h4 mb-4">
+                {% if node %}Editar Nota: {{ node.title }}{% else %}Nueva Nota de Conocimiento{% endif %}
+            </h2>
+            
+            <form action="{% if node %}{{ url_for('knowledge.edit', node_id=node.id) }}{% else %}{{ url_for('knowledge.add') }}{% endif %}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Título de la Nota</label>
+                    <input type="text" class="form-control bg-white text-dark border-secondary" name="title" value="{{ node.title if node else '' }}" placeholder="Ej: Configuración básica de Docker Swarm" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Contenido (Soporta Markdown)</label>
+                    <textarea class="form-control bg-white text-dark border-secondary" name="content" rows="12" placeholder="Documenta el problema, solución, código o enlaces aquí..." required>{{ node.content if node else '' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Asociar con Tareas Activas</label>
+                    <select class="form-select bg-white text-dark border-secondary" name="tasks" multiple style="height: 150px;">
+                        {% for task in tasks %}
+                            <option value="{{ task.id }}" {% if node_task_ids and task.id in node_task_ids %}selected{% endif %}>
+                                {{ task.title }} ({{ task.status }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="text-zen-muted small mt-1">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples tareas.</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('knowledge.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-zen">Guardar Nota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

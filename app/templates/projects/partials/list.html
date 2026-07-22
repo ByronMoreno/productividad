@@ -1,0 +1,26 @@
+{% if projects %}
+    <div class="row g-3">
+        {% for project in projects %}
+            <div class="col-md-4">
+                <div class="zen-card h-100 position-relative">
+                    <button class="btn btn-sm text-danger position-absolute top-0 end-0 m-3 border-0 bg-transparent" 
+                            hx-delete="{{ url_for('projects.delete', project_id=project.id) }}"
+                            hx-target="#projects-list"
+                            hx-swap="innerHTML"
+                            hx-confirm="¿Seguro que deseas eliminar este proyecto y todas sus tareas asociadas?">
+                        <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="d-inline-block rounded-circle me-2" style="width: 14px; height: 14px; background-color: {{ project.color_hex or '#4a5568' }}; border: 1px solid rgba(0,0,0,0.1);"></span>
+                        <h3 class="h5 fw-bold mb-0 text-dark">{{ project.name }}</h3>
+                    </div>
+                    
+                    <p class="text-zen-muted small mb-0">{{ project.description or 'Sin descripción disponible.' }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-zen-muted text-center py-5">No tienes proyectos o áreas creadas. Crea una para organizar tus tareas.</p>
+{% endif %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold mb-0">Kanban Inteligente</h1>
+        <p class="text-zen-muted small mb-0">Visualiza y gestiona el flujo de tus actividades.</p>
+    </div>
+    <button class="btn btn-zen" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+        <i data-lucide="plus" class="me-2"></i>Nueva Tarea
+    </button>
+</div>
+
+<div id="kanban-board" class="mt-4">
+    {% include "tasks/partials/kanban.html" %}
+</div>
+
+<!-- Modal para Crear Tarea -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Nueva Tarea</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('tasks.add') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Título</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descripción</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Proyecto / Área</label>
+                        <select class="form-select" name="project_id">
+                            <option value="">Ninguno</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Estado Inicial</label>
+                        <select class="form-select" name="status">
+                            <option value="PENDING" selected>Pendiente</option>
+                            <option value="TODAY">Para Hoy</option>
+                            <option value="PROGRESS">En Proceso</option>
+                            <option value="WAITING">Esperando</option>
+                            <option value="DONE">Completado</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Energía Requerida (1-5)</label>
+                            <select class="form-select" name="energy">
+                                <option value="1">★ (Muy Baja)</option>
+                                <option value="2">★★</option>
+                                <option value="3" selected>★★★</option>
+                                <option value="4">★★★★</option>
+                                <option value="5">★★★★★ (Muy Alta)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Prioridad</label>
+                            <select class="form-select" name="priority">
+                                <option value="LOW">Baja</option>
+                                <option value="MEDIUM" selected>Media</option>
+                                <option value="HIGH">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Tiempo Estimado (mins)</label>
+                            <input type="number" class="form-control" name="estimated_time" value="30" min="5">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Fecha Límite</label>
+                            <input type="date" class="form-control" name="due_date">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-zen">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

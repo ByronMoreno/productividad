@@ -1,0 +1,20 @@
+<div class="debate-transcript-container p-3 mb-4 rounded border border-secondary bg-light" style="max-height: 400px; overflow-y: auto; font-size: 0.9rem; line-height: 1.6; color: var(--text-primary);">
+    {{ transcript|safe }}
+</div>
+
+<div class="zen-card" style="border-left: 4px solid var(--accent) !important; background-color: #f1f5f9; hover: none;">
+    <h4 class="h6 fw-bold text-dark mb-3"><i class="fa-solid fa-list-check me-2 text-primary"></i>Resolución del Comité: Agenda Sugerida</h4>
+    <ul class="list-group list-group-flush bg-transparent">
+        {% if recommendations %}
+            {% for rec in recommendations %}
+                <li class="list-group-item bg-transparent text-dark py-2 px-0 border-0" style="font-size: 0.875rem;">
+                    <i class="fa-solid fa-circle-play text-primary me-2"></i>{{ rec }}
+                </li>
+            {% endfor %}
+        {% else %}
+            <li class="list-group-item bg-transparent text-muted py-2 px-0 border-0" style="font-size: 0.875rem;">
+                Ninguna tarea recomendada por el límite de energía actual.
+            </li>
+        {% endif %}
+    </ul>
+</div>

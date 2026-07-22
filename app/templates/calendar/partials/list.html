@@ -1,0 +1,32 @@
+<div class="row g-3">
+    <div class="col-12">
+        <h3 class="h5 mb-3 text-dark">Bloques del día {{ selected_date.strftime('%d/%m/%Y') }}</h3>
+        {% if blocks %}
+            {% for block in blocks %}
+                <div class="time-block-item">
+                    <div>
+                        <strong class="text-dark fs-6">{{ block.start_time.strftime('%H:%M') }} - {{ block.end_time.strftime('%H:%M') }}</strong>
+                        <div class="text-zen-muted mt-1">{{ block.title or (block.task.title if block.task else 'Sin título') }}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        {% if block.task %}
+                            <span class="badge bg-light text-dark border border-secondary">
+                                <i data-lucide="list-todo" class="me-1 text-primary" style="width: 12px; height: 12px;"></i>Tarea
+                            </span>
+                        {% else %}
+                            <span class="badge bg-light text-zen-muted border border-secondary">Bloque Libre</span>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-danger border-0 bg-transparent" 
+                                hx-delete="{{ url_for('calendar.delete', block_id=block.id) }}"
+                                hx-target="#calendar-blocks-list"
+                                hx-swap="innerHTML">
+                            <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-zen-muted text-center py-5">No tienes bloques de tiempo estructurados para este día.</p>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,96 @@
+{% if inbox_items %}
+    <ul class="list-group">
+        {% for item in inbox_items %}
+            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 border-secondary">
+                <div class="pe-2 overflow-hidden w-100">
+                    <div class="text-dark fw-medium small mb-1 text-truncate" title="{{ item.content }}">{{ item.content }}</div>
+                    <span class="badge bg-light text-zen-muted border border-secondary" style="font-size: 0.65rem;">
+                        <i data-lucide="clock" class="me-1" style="width: 10px; height: 10px;"></i>{{ item.created_at.strftime('%H:%M') }}
+                    </span>
+                </div>
+                <div class="d-flex gap-1">
+                    <!-- Botón para procesar mediante Modal -->
+                    <button class="btn btn-sm btn-outline-light border-secondary" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#processModal{{ item.id }}"
+                            title="Procesar tarea">
+                        <i data-lucide="sparkles" class="text-primary" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    <!-- Botón para eliminar directamente -->
+                    <button class="btn btn-sm btn-outline-danger" 
+                            hx-delete="{{ url_for('inbox.delete', item_id=item.id) }}"
+                            hx-target="#inbox-list"
+                            hx-swap="innerHTML"
+                            title="Eliminar pensamiento">
+                        <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+            </li>
+
+            <!-- Modal de Procesamiento de Tarea (Notion style) -->
+            <div class="modal fade" id="processModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form action="{{ url_for('inbox.process', item_id=item.id) }}" method="POST">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold"><i data-lucide="sparkles" class="text-primary me-2"></i>Clasificar Tarea IA</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Título de la Tarea</label>
+                                    <input type="text" class="form-control" name="title" value="{{ item.content }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Descripción / Notas</label>
+                                    <textarea class="form-control" name="description" rows="3" placeholder="Información adicional..."></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Proyecto / Área</label>
+                                        <select class="form-select" name="project_id">
+                                            <option value="">Ninguno (General)</option>
+                                            {% for project in projects %}
+                                                <option value="{{ project.id }}">{{ project.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Estado Inicial</label>
+                                        <select class="form-select" name="status">
+                                            <option value="PENDING">Pendientes</option>
+                                            <option value="TODAY">Para Hoy</option>
+                                            <option value="PROGRESS">En Proceso</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Tiempo Estimado (min)</label>
+                                        <input type="number" class="form-control" name="estimated_time" value="30" min="5" step="5" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Carga de Energía (1-5★)</label>
+                                        <select class="form-select" name="energy">
+                                            <option value="1">1★ - Trivial (Ej: Responder correo)</option>
+                                            <option value="2">2★ - Sencilla (Ej: Minuta corta)</option>
+                                            <option value="3" selected>3★ - Moderada (Ej: Ajustar Docker)</option>
+                                            <option value="4">4★ - Alta (Ej: Analizar código)</option>
+                                            <option value="5">5★ - Crítica (Ej: Diseñar arquitectura)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-light border-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-zen">Guardar Tarea</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-zen-muted text-center py-5 small mb-0">Tu bandeja de captura está vacía. ¡Bien hecho!</p>
+{% endif %}

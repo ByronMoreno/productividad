@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Columna Principal (Ancho 8): Trabajo Profundo y Enfoque -->
+    <div class="col-lg-8">
+        <!-- Widget 1: Tarea Activa (Brain Off) con Pomodoro -->
+        <div class="zen-card mb-4 text-center py-5 position-relative" id="focus-area">
+            <div class="mb-4">
+                <span class="badge bg-light text-primary border border-secondary mb-2" style="font-size: 0.75rem;">
+                    <i data-lucide="zap" class="me-1"></i>Enfoque Activo
+                </span>
+                {% if active_task %}
+                    <h2 class="display-6 fw-bold text-dark my-3" id="current-task-title">{{ active_task.title }}</h2>
+                    {% if active_task.description %}
+                        <p class="text-zen-muted small mb-3 text-break mx-auto" style="font-size: 0.85rem; white-space: pre-wrap; line-height: 1.4; max-width: 500px;">{{ active_task.description }}</p>
+                    {% endif %}
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        <span class="badge bg-light text-dark border border-secondary"><i data-lucide="clock" class="me-1" style="width: 12px; height: 12px;"></i>{{ active_task.estimated_time }} min</span>
+                        <span class="badge bg-light text-warning border border-secondary">
+                            {% for i in range(active_task.energy) %}★{% endfor %}
+                        </span>
+                    </div>
+                {% else %}
+                    <h2 class="h4 text-zen-muted my-4">No tienes una tarea activa para hoy</h2>
+                    <p class="text-zen-muted small mb-4">Selecciona o crea una tarea en tu tablero Kanban para comenzar.</p>
+                {% endif %}
+            </div>
+
+            {% if active_task %}
+                <!-- Cronómetro Digital y Controles de Sesión -->
+                <div class="mb-4">
+                    <div class="display-3 fw-bold text-primary mb-2" id="timer-count">00:00</div>
+                    <div class="text-zen-muted small mb-3" id="timer-status">Pausado</div>
+                    
+                    <div class="d-flex gap-2 justify-content-center mb-4" id="focus-sub-controls" style="display: none !important;">
+                        <button class="btn btn-sm btn-outline-light" onclick="logInterruption()">
+                            <i data-lucide="alert-triangle" class="me-1 text-warning" style="width: 14px; height: 14px;"></i>Interrupción (<span id="interruption-count">0</span>)
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" onclick="triggerBlockPrompt()">
+                            <i data-lucide="help-circle" class="me-1 text-danger" style="width: 14px; height: 14px;"></i>¿Bloqueado?
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botonera de Control Principal: Iniciar, Detener, Terminar -->
+                <div class="w-100 mx-auto" style="max-width: 320px;">
+                    <div class="d-flex gap-2 mb-2">
+                        <!-- Botón Iniciar / Reanudar -->
+                        <button class="btn btn-zen flex-grow-1 py-2" id="btn-start-focus" onclick="startFocusSession('{{ active_task.id }}')">
+                            <i data-lucide="play" class="me-2"></i>Iniciar
+                        </button>
+                        
+                        <!-- Botón Detener / Pausar (oculto por defecto) -->
+                        <button class="btn btn-outline-secondary flex-grow-1 py-2" id="btn-pause-focus" onclick="pauseFocusSession()" style="display: none;">
+                            <i data-lucide="pause" class="me-2"></i>Detener
+                        </button>
+                    </div>
+
+                    <!-- Botón Terminar (siempre disponible) -->
+                    <form action="{{ url_for('analytics.complete_task', task_id=active_task.id) }}" method="POST" id="form-end-focus">
+                        <button class="btn btn-brain-off w-100 py-2" type="submit">
+                            <i data-lucide="check" class="me-2"></i>Terminar Actividad
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Modal de Bloqueo Flotante -->
+                <div id="block-prompt-card" class="position-absolute top-50 start-50 translate-middle w-100 h-100 p-4 d-flex flex-column justify-content-center align-items-center bg-white border border-secondary rounded-3" style="display: none !important; z-index: 10;">
+                    <h4 class="h5 fw-bold text-danger mb-3"><i data-lucide="help-circle" class="me-2"></i>¿Te bloqueaste?</h4>
+                    <p class="text-zen-muted small text-center mb-3">Llevas 20 segundos de inactividad detectada. Cuéntale al Coach qué sucede:</p>
+                    <div class="d-flex flex-column gap-2 w-100" style="max-width: 250px;">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="logBlockReason('NOT_KNOW_HOW')">No sé cómo seguir</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="logBlockReason('DISTRACTED')">Me distraje</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="logBlockReason('TIRED')">Estoy muy cansado</button>
+                        <button class="btn btn-sm btn-link text-decoration-none text-muted mt-2" onclick="dismissBlockPrompt()">Volver al trabajo</button>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('tasks.index') }}" class="btn btn-outline-secondary px-4 py-2">
+                    <i data-lucide="kanban" class="me-2"></i>Ir al Kanban Board
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Widget 2: Time Blocking (Agenda del Día) -->
+        <div class="zen-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h5 mb-0 fw-bold"><i data-lucide="calendar" class="me-2 text-success"></i>Time Blocking para hoy</h3>
+                <a href="{{ url_for('calendar.index') }}" class="btn btn-sm btn-outline-secondary py-1 px-3" style="font-size: 0.8rem;">Gestionar Bloques</a>
+            </div>
+            
+            <div class="overflow-auto" style="max-height: 350px;">
+                {% if today_blocks %}
+                    {% for block in today_blocks %}
+                        <div class="time-block-item d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong class="text-dark" style="font-size: 0.9rem;">{{ block.start_time.strftime('%H:%M') }} - {{ block.end_time.strftime('%H:%M') }}</strong>
+                                <div class="text-zen-muted mt-1" style="font-size: 0.85rem;">{{ block.title or (block.task.title if block.task else 'Bloque Libre') }}</div>
+                            </div>
+                            {% if block.task %}
+                                <span class="badge bg-light text-primary border border-secondary" style="font-size: 0.7rem;">Tarea</span>
+                            {% else %}
+                                <span class="badge bg-light text-zen-muted border border-secondary" style="font-size: 0.7rem;">Libre</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-zen-muted text-center py-5 small mb-0">No tienes bloques de tiempo planificados para hoy.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Widget 3: Comité Multi-Agente -->
+        <div class="zen-card">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h2 class="h5 mb-1 fw-bold"><i data-lucide="users" class="me-2 text-primary"></i>Comité de Organización Multi-Agente</h2>
+                    <p class="text-zen-muted small mb-0 font-size-0.8">Los agentes de tus áreas (Docencia, Código, Bolsa, Salud) concilian tus prioridades.</p>
+                </div>
+                <button class="btn btn-zen btn-sm" 
+                        hx-post="{{ url_for('ai.agents_debate') }}" 
+                        hx-target="#debate-result-area" 
+                        hx-indicator="#debate-indicator">
+                    <i data-lucide="messages-square" class="me-2"></i>Reunir al Comité
+                </button>
+            </div>
+            
+            <!-- Indicador de Carga -->
+            <div id="debate-indicator" class="htmx-indicator text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="text-zen-muted small ms-2">Los agentes de IA están debatiendo tus prioridades...</span>
+            </div>
+            
+            <!-- Área de Resultados -->
+            <div id="debate-result-area" class="mt-3">
+                <p class="text-zen-muted small text-center py-3">Presiona "Reunir al Comité" para simular la priorización de tu día.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Lateral (Ancho 4): Captura, Estado de Energía y Chat del Coach -->
+    <div class="col-lg-4">
+        <!-- Widget A: Estado de Energía Cognitiva -->
+        <div class="zen-card mb-4">
+            <h3 class="h6 fw-bold mb-3"><i data-lucide="battery-charging" class="me-2 text-success"></i>Energía Cognitiva de Hoy</h3>
+            <form action="{{ url_for('core.set_energy') }}" method="POST" class="mb-3">
+                <div class="btn-group energy-group w-100" role="group">
+                    <button type="submit" name="energy_limit" value="1" class="btn btn-sm py-2 {% if status.current_energy_limit == 1 %}active-1{% endif %}">Baja 🔋</button>
+                    <button type="submit" name="energy_limit" value="2" class="btn btn-sm py-2 {% if status.current_energy_limit == 2 %}active-2{% endif %}">Media ⚡</button>
+                    <button type="submit" name="energy_limit" value="3" class="btn btn-sm py-2 {% if status.current_energy_limit == 3 %}active-3{% endif %}">Alta 🚀</button>
+                </div>
+            </form>
+            <div class="text-zen-muted" style="font-size: 0.75rem;">
+                Filtro activo: 
+                <strong>
+                    {% if status.current_energy_limit == 1 %}Tareas <= 2★{% elif status.current_energy_limit == 2 %}Tareas <= 4★{% else %}Todas las tareas{% endif %}
+                </strong>
+            </div>
+        </div>
+
+        <!-- Widget B: Inbox (Captura Rápida) -->
+        <div class="zen-card mb-4">
+            <h3 class="h6 fw-bold mb-1"><i data-lucide="brain" class="me-2 text-primary"></i>Capturar Pensamiento (Inbox)</h3>
+            <p class="text-zen-muted small mb-3">Saca tus ideas para no sobrecargar tu memoria de trabajo.</p>
+            
+            <form hx-post="{{ url_for('inbox.add') }}" 
+                  hx-target="#inbox-list" 
+                  hx-swap="innerHTML" 
+                  hx-on::after-request="document.getElementById('inbox-input').value = ''"
+                  class="mb-3">
+                <div class="input-group">
+                    <input type="text" 
+                           id="inbox-input" 
+                           name="content" 
+                           class="form-control form-control-sm bg-white text-dark border-secondary" 
+                           placeholder="Captura rápida..." 
+                           required>
+                    <button class="btn btn-sm btn-zen" type="submit">Capturar</button>
+                </div>
+            </form>
+            
+            <div id="inbox-list" class="overflow-auto" style="max-height: 250px;">
+                {% include "inbox/partials/list.html" %}
+            </div>
+        </div>
+
+        <!-- Widget C: Asistente Zen Coach -->
+        <div class="zen-card">
+            <h3 class="h6 fw-bold mb-1"><i data-lucide="messages-square" class="me-2 text-info"></i>Asistente Zen Coach</h3>
+            <p class="text-zen-muted small mb-3">Consejos inteligentes y empáticos basados en tu estado.</p>
+            
+            <div id="chat-history" class="overflow-auto mb-3" style="max-height: 200px; min-height: 150px;">
+                <div class="mb-3 text-start">
+                    <div class="d-inline-block bg-white text-dark p-2 rounded border border-secondary" style="max-width: 90%; font-size: 0.85rem; border-color: #cbd5e1 !important;">
+                        <strong>Coach:</strong> Hola. Analizando tus pendientes y tu energía actual, te sugiero empezar por lo más sencillo para ganar inercia. ¿Cómo te sientes hoy?
+                    </div>
+                </div>
+            </div>
+
+            <form hx-post="{{ url_for('ai.coach') }}" 
+                  hx-target="#chat-history" 
+                  hx-swap="beforeend" 
+                  hx-on::after-request="document.getElementById('chat-input').value = ''"
+                  class="mt-2">
+                <div class="input-group">
+                    <input type="text" 
+                           id="chat-input" 
+                           name="message" 
+                           class="form-control form-control-sm bg-white text-dark border-secondary" 
+                           placeholder="¿Cómo voy hoy?" 
+                           required>
+                    <button class="btn btn-sm btn-outline-info" type="submit">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let focusSessionId = null;
+    let focusTimer = null;
+    let focusSeconds = {{ accumulated_seconds or 0 }};
+    let idleTimer = null;
+    let isFocusActive = false;
+
+    // Formatear el cronómetro inicialmente en la carga
+    updateTimerDisplay();
+
+    function updateTimerDisplay() {
+        let m = Math.floor(focusSeconds / 60).toString().padStart(2, '0');
+        let s = (focusSeconds % 60).toString().padStart(2, '0');
+        document.getElementById('timer-count').innerText = `${m}:${s}`;
+    }
+
+    function startFocusSession(taskId) {
+        fetch(`/analytics/start-focus/${taskId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                focusSessionId = data.session_id;
+                isFocusActive = true;
+                
+                // Actualizar botonera
+                document.getElementById('btn-start-focus').style.display = 'none';
+                document.getElementById('btn-pause-focus').style.display = 'inline-block';
+                document.getElementById('focus-sub-controls').style.setProperty('display', 'flex', 'important');
+                document.getElementById('timer-status').innerText = 'Trabajando...';
+                document.getElementById('timer-status').classList.add('text-primary');
+                
+                // Correr cronómetro
+                focusTimer = setInterval(() => {
+                    focusSeconds++;
+                    updateTimerDisplay();
+                }, 1000);
+
+                resetIdleTimer();
+                window.onload = resetIdleTimer;
+                document.onmousemove = resetIdleTimer;
+                document.onkeydown = resetIdleTimer;
+                
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+    }
+
+    function pauseFocusSession() {
+        if (!focusSessionId) return;
+        
+        // Pausar UI
+        clearInterval(focusTimer);
+        isFocusActive = false;
+        clearTimeout(idleTimer);
+        
+        fetch(`/analytics/pause-focus/${focusSessionId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                focusSessionId = null;
+                
+                // Mostrar botón de Reanudar
+                document.getElementById('btn-start-focus').style.display = 'inline-block';
+                document.getElementById('btn-start-focus').innerHTML = '<i data-lucide="rotate-ccw" class="me-2"></i>Reanudar';
+                document.getElementById('btn-pause-focus').style.display = 'none';
+                document.getElementById('focus-sub-controls').style.setProperty('display', 'none', 'important');
+                document.getElementById('timer-status').innerText = 'Detenido (Pausado)';
+                document.getElementById('timer-status').classList.remove('text-primary');
+                
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+    }
+
+    function logInterruption() {
+        if (!focusSessionId) return;
+        fetch(`/analytics/log-interruption/${focusSessionId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('interruption-count').innerText = data.interruptions;
+            });
+    }
+
+    function triggerBlockPrompt() {
+        if (!isFocusActive) return;
+        document.getElementById('block-prompt-card').style.display = 'flex';
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function dismissBlockPrompt() {
+        document.getElementById('block-prompt-card').style.setProperty('display', 'none', 'important');
+        resetIdleTimer();
+    }
+
+    function logBlockReason(reason) {
+        if (!focusSessionId) return;
+        
+        let formData = new FormData();
+        formData.append('reason', reason);
+        
+        fetch(`/analytics/log-block/${focusSessionId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            const chatHistory = document.getElementById('chat-history');
+            const coachBubble = `
+                <div class="mb-3 text-start">
+                    <div class="d-inline-block bg-white text-dark p-2 rounded border border-secondary" style="max-width: 85%; font-size: 0.85rem; border-color: #cbd5e1 !important;">
+                        <strong>Coach Zen (Tip):</strong> ${data.coach_tip}
+                    </div>
+                </div>
+            `;
+            chatHistory.insertAdjacentHTML('beforeend', coachBubble);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            dismissBlockPrompt();
+        });
+    }
+
+    function resetIdleTimer() {
+        if (!isFocusActive) return;
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(triggerBlockPrompt, 20000); 
+    }
+</script>
+{% endblock %}

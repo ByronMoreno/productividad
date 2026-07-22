@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Casos de Estudio de Arquitecturas de Software de Grandes Empresas: Netflix, Amazon, WhatsApp y Moodle. Análisis, Ventajas, Desventajas y Propuestas Técnicas.">
+  <title>Casos de Estudio: Arquitecturas a Gran Escala | Clase 5</title>
+  
+  <!-- Google Fonts: Outfit and Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================
+       CSS Variables & Global Reset
+       ========================================== */
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(15, 23, 42, 0.65);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-glow: rgba(59, 130, 246, 0.15);
+      --border-light: rgba(255, 255, 255, 0.08);
+      
+      --color-primary: #ef4444; /* Netflix Red / Global Brand primary */
+      --color-primary-rgb: 239, 68, 68;
+      --color-secondary: #8b5cf6; /* Purple */
+      --color-secondary-rgb: 139, 92, 246;
+      --color-accent: #06b6d4; /* Cyan */
+      --color-accent-rgb: 6, 182, 212;
+      --color-success: #10b981; /* Emerald */
+      --color-danger: #ef4444;
+      --color-warning: #f59e0b;
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-bright: #ffffff;
+      
+      --sidebar-width: 280px;
+      --transition-speed: 0.3s;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+    }
+
+    /* Ambient Gradients */
+    .bg-glow-1 {
+      position: fixed;
+      top: -20%;
+      left: -10%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, rgba(0,0,0,0) 70%);
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .bg-glow-2 {
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, rgba(0,0,0,0) 70%);
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* ==========================================
+       Sidebar Style
+       ========================================== */
+    .sidebar {
+      width: var(--sidebar-width);
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform var(--transition-speed) ease;
+    }
+
+    .sidebar-header {
+      padding: 30px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-header svg {
+      width: 32px;
+      height: 32px;
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 2;
+    }
+
+    .sidebar-logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-bright), var(--text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-logo-text span {
+      font-size: 0.75rem;
+      color: var(--color-accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    .sidebar-menu li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all var(--transition-speed) ease;
+    }
+
+    .sidebar-menu li a svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      transition: transform var(--transition-speed) ease;
+    }
+
+    .sidebar-menu li a:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-bright);
+    }
+
+    .sidebar-menu li a:hover svg {
+      transform: translateX(3px);
+    }
+
+    .sidebar-menu li a.active {
+      background: linear-gradient(90deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.05));
+      border-left: 3px solid var(--color-accent);
+      color: var(--color-accent);
+      padding-left: 13px;
+    }
+
+    .sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border-light);
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================
+       Main Layout
+       ========================================== */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex-grow: 1;
+      padding: 40px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+    }
+
+    /* Progress bar */
+    .progress-bar-container {
+      position: fixed;
+      top: 0;
+      left: var(--sidebar-width);
+      right: 0;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      z-index: 101;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+      transition: width 0.1s ease;
+    }
+
+    /* Mobile Header */
+    .top-nav {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--border-light);
+      padding: 16px 24px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 99;
+    }
+
+    .top-nav h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* ==========================================
+       Hero Section
+       ========================================== */
+    .hero-section {
+      position: relative;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.4));
+      border: 1px solid var(--border-light);
+      border-radius: 24px;
+      padding: 50px;
+      overflow: hidden;
+      margin-top: 0;
+    }
+
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+    }
+
+    .class-meta {
+      font-size: 0.85rem;
+      color: var(--color-accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .class-meta span.separator {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--color-accent);
+      display: inline-block;
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--text-bright) 30%, #9dd9f3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    /* Back Link Button */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-accent);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      transition: transform 0.2s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-3px);
+      color: var(--text-bright);
+    }
+
+    .back-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    /* ==========================================
+       General Section / Content
+       ========================================== */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 30px;
+      background: linear-gradient(to bottom, var(--color-accent), var(--color-secondary));
+      border-radius: 4px;
+    }
+
+    .topic-section {
+      padding-top: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 50px;
+    }
+
+    .topic-section:last-of-type {
+      border-bottom: none;
+    }
+
+    .intro-paragraph {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .highlight {
+      color: var(--text-bright);
+      font-weight: 500;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, transparent);
+      transition: all var(--transition-speed) ease;
+    }
+
+    .info-card:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+
+    .info-card:hover::before {
+      background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+    }
+
+    .info-card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-card p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================
+       Interactive Tab Elements (E-commerce / Companies)
+       ========================================== */
+    .tabs-wrapper {
+      background: #0f172a;
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .tabs-header {
+      background: rgba(15, 23, 42, 0.8);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 16px 24px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-bright);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-btn.active {
+      color: var(--color-accent);
+      border-bottom-color: var(--color-accent);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 30px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Comparison Table inside Tabs */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .comp-table td {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.95rem;
+    }
+
+    .comp-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comp-table td.label {
+      color: var(--text-bright);
+      font-weight: 600;
+      width: 30%;
+    }
+
+    .comp-table td.example {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Mini CSS Architecture diagram styles */
+    .arch-diagram-block {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .arch-layer-box {
+      background: #1e293b;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 8px;
+      width: 80%;
+      padding: 12px;
+      text-align: center;
+      font-weight: 600;
+      color: var(--text-bright);
+      position: relative;
+    }
+
+    .arch-layer-box.green {
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .arch-layer-box.orange {
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .arch-layer-arrow {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    /* ==========================================
+       Interactive SVG Diagram Styles
+       ========================================== */
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .diagram-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .interactive-svg {
+      width: 100%;
+      min-width: 700px;
+      height: auto;
+      display: block;
+    }
+
+    .svg-node {
+      cursor: pointer;
+    }
+
+    .svg-node rect, .svg-node ellipse {
+      fill: #0f172a;
+      stroke: var(--border-light);
+      stroke-width: 2;
+      transition: all var(--transition-speed) ease;
+    }
+
+    .svg-node:hover rect, .svg-node.active rect {
+      fill: rgba(6, 182, 212, 0.12);
+      stroke: var(--color-accent);
+      filter: drop-shadow(0 4px 8px rgba(6, 182, 212, 0.2));
+    }
+
+    .svg-node:hover ellipse, .svg-node.active ellipse {
+      fill: rgba(6, 182, 212, 0.12);
+      stroke: var(--color-accent);
+      filter: drop-shadow(0 4px 8px rgba(6, 182, 212, 0.2));
+    }
+
+    .svg-node text {
+      fill: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      text-anchor: middle;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .svg-node text.sub {
+      fill: var(--text-muted);
+      font-size: 9px;
+      font-weight: 400;
+    }
+
+    .svg-connector {
+      stroke: var(--text-muted);
+      stroke-width: 1.5;
+      fill: none;
+      transition: stroke 0.3s ease;
+    }
+
+    .svg-connector.highlighted {
+      stroke: var(--color-accent);
+      stroke-width: 2.5;
+    }
+
+    .diagram-info-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .diagram-info-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .diagram-info-desc {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================
+       Quiz System
+       ========================================== */
+    .quiz-container {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.4));
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 40px;
+      margin-top: 24px;
+    }
+
+    .quiz-question {
+      margin-bottom: 30px;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    .quiz-question h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-bright);
+      display: flex;
+      gap: 10px;
+    }
+
+    .quiz-question h4 span.q-num {
+      color: var(--color-accent);
+      font-weight: 700;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .quiz-option {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-light);
+      padding: 14px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .quiz-option:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .quiz-option input[type="radio"] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--text-muted);
+      border-radius: 50%;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .quiz-option input[type="radio"]::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      transform: scale(0);
+      transition: transform 0.2s ease;
+    }
+
+    .quiz-option input[type="radio"]:checked {
+      border-color: var(--color-accent);
+    }
+
+    .quiz-option input[type="radio"]:checked::before {
+      transform: scale(1);
+    }
+
+    .quiz-option.selected {
+      background: rgba(6, 182, 212, 0.05);
+      border-color: rgba(6, 182, 212, 0.3);
+      color: var(--text-bright);
+    }
+
+    .quiz-option.correct {
+      background: rgba(16, 185, 129, 0.08) !important;
+      border-color: rgba(16, 185, 129, 0.4) !important;
+      color: #a7f3d0 !important;
+    }
+
+    .quiz-option.incorrect {
+      background: rgba(239, 68, 68, 0.08) !important;
+      border-color: rgba(239, 68, 68, 0.4) !important;
+      color: #fca5a5 !important;
+    }
+
+    .quiz-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+      border: none;
+      color: var(--text-bright);
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .submit-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:active {
+      transform: translateY(1px);
+    }
+
+    .quiz-results-summary {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .score-badge {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-light);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+    }
+
+    .score-badge.pass {
+      color: var(--color-success);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .score-badge.fail {
+      color: var(--color-danger);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* ==========================================
+       Responsive & Mobile Sidebar
+       ========================================== */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 24px;
+        padding-top: 80px;
+      }
+
+      .progress-bar-container {
+        left: 0;
+      }
+
+      .top-nav {
+        display: flex;
+      }
+
+      .hero-section {
+        padding: 30px 20px;
+      }
+
+      .hero-title {
+        font-size: 2rem;
+      }
+    }
+
+    .backdrop-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 98;
+    }
+
+    .backdrop-overlay.open {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Mobile Top Nav -->
+  <header class="top-nav">
+    <button class="menu-btn" id="mobile-menu-toggle" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+    <h1>Análisis Sistemas Reales</h1>
+    <div style="width: 24px;"></div>
+  </header>
+
+  <!-- Reading Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="reading-progress"></div>
+  </div>
+
+  <!-- Sidebar Drawer -->
+  <nav class="sidebar" id="sidebar-nav">
+    <div class="sidebar-header">
+      <svg viewBox="0 0 24 24">
+        <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"></path>
+      </svg>
+      <div class="sidebar-logo-text">
+        <h2>Clase 5</h2>
+        <span>Arquitectura SW</span>
+      </div>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="Estructuras_Arquitectonicas_Clase 5.html" class="active">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        Volver a Clase 5
+      </a></li>
+      <li><a href="#analisis-empresas">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Casos de Estudio
+      </a></li>
+      <li><a href="#quiz">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        Autoevaluación
+      </a></li>
+    </ul>
+    <div class="sidebar-footer">
+      UNIBE &copy; 2026
+    </div>
+  </nav>
+
+  <div class="backdrop-overlay" id="menu-overlay"></div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <a href="Estructuras_Arquitectonicas_Clase 5.html" class="back-btn" id="inicio">
+      <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Regresar a Estructuras Arquitectónicas
+    </a>
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+      <div class="class-meta">
+        <span>Práctica de Diseño</span>
+        <span class="separator"></span>
+        <span>Casos Empresariales</span>
+      </div>
+      <h1 class="hero-title">Arquitecturas Reales a Gran Escala</h1>
+      <p class="hero-desc">
+        Analiza a profundidad el diseño de los sistemas de software de líderes tecnológicos globales: **Netflix, Amazon, WhatsApp y Moodle**. Compara cómo aplican y adaptan los estilos arquitectónicos clásicos y modernos para resolver sus retos de negocio únicos.
+      </p>
+    </header>
+
+    <!-- 1. Casos de Estudio Selector -->
+    <section class="topic-section" id="analisis-empresas">
+      <h2 class="section-title">Análisis Técnico y Propuestas Arquitectónicas</h2>
+      <p class="intro-paragraph">
+        Selecciona una de las siguientes pestañas para explorar el estilo arquitectónico, ventajas, desventajas, diagramación interactiva y propuesta técnica para cada empresa:
+      </p>
+
+      <div class="tabs-wrapper">
+        <!-- Tabs Buttons -->
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="case-netflix">
+            Netflix (Streaming)
+          </button>
+          <button class="tab-btn" data-tab="case-amazon">
+            Amazon (E-Commerce)
+          </button>
+          <button class="tab-btn" data-tab="case-whatsapp">
+            WhatsApp (Mensajería)
+          </button>
+          <button class="tab-btn" data-tab="case-moodle">
+            Moodle (E-Learning)
+          </button>
+        </div>
+
+        <!-- Tab 1: Netflix -->
+        <div class="tab-panel active" id="case-netflix">
+          <h3 style="font-size: 1.5rem; color: var(--color-primary); margin-bottom: 15px;">Caso 1: Netflix (Distribución masiva de video)</h3>
+          
+          <table class="comp-table">
+            <tr>
+              <td class="label">¿Qué estilo utiliza?</td>
+              <td class="example">
+                <span class="highlight">Microservicios Descentralizados + Orientado a Eventos + Red CDN Propietaria</span>.<br>
+                Netflix descompone sus capacidades en más de 1000 microservicios independientes, orquestados asíncronamente con Apache Kafka y distribuyendo datos pesados localmente en los ISPs mediante su infraestructura CDN global **Open Connect**.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Principales Ventajas</td>
+              <td class="example">
+                ✔ **Alta Resiliencia**: Los fallos en servicios menores (ej. recomendaciones) no bloquean el streaming básico.<br>
+                ✔ **Escalabilidad Elástica**: Se duplican solo los servidores de streaming y base de datos de reproducción durante picos de tráfico.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Desventajas Identificadas</td>
+              <td class="example">
+                ✘ **Consistencia Eventual Compleja**: La descentralización de datos impide transacciones inmediatas ACID.<br>
+                ✘ **Complejidad en Monitoreo**: Monitorear millones de flujos distribuidos requiere herramientas altamente complejas.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Propuesta Alternativa</td>
+              <td class="example">
+                Para un sistema similar, propondría **Microservicios con Coreografía asíncrona** usando bases NoSQL rápidas (MongoDB) para metadatos, bases relacionales ACID (PostgreSQL) para pasarela de cobros, y enrutamiento perimetral robusto (API Gateway).
+              </td>
+            </tr>
+          </table>
+
+          <!-- Netflix Interactive SVG -->
+          <div class="diagram-container">
+            <h4 style="color: var(--color-accent); font-size: 1.1rem; text-transform: uppercase;">Diagrama Propuesto para Plataforma de Streaming (Streamify)</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+              Pasa el cursor o haz clic en los bloques del diagrama para ver su descripción:
+            </p>
+            <div class="diagram-wrapper">
+              <svg viewBox="0 0 800 450" class="interactive-svg" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+                  </marker>
+                </defs>
+
+                <!-- CONNECTORS -->
+                <path d="M 120 225 L 180 225" class="svg-connector" marker-end="url(#arrow)" id="conn-clients-gateway"/>
+                <path d="M 290 200 L 350 90" class="svg-connector" marker-end="url(#arrow)" id="conn-gw-auth"/>
+                <path d="M 300 225 L 340 225" class="svg-connector" marker-end="url(#arrow)" id="conn-gw-catalog"/>
+                <path d="M 290 250 L 350 360" class="svg-connector" marker-end="url(#arrow)" id="conn-gw-stream"/>
+                <path d="M 490 90 L 590 90" class="svg-connector" marker-end="url(#arrow)" id="conn-auth-db"/>
+                <path d="M 490 225 L 590 225" class="svg-connector" marker-end="url(#arrow)" id="conn-catalog-db"/>
+                <path d="M 420 120 L 420 270" class="svg-connector" marker-end="url(#arrow)" id="conn-auth-kafka"/>
+                <path d="M 420 330 L 420 295" class="svg-connector" marker-end="url(#arrow)" id="conn-stream-kafka"/>
+                <path d="M 420 390 L 420 410" class="svg-connector" marker-end="url(#arrow)" id="conn-stream-cdn"/>
+                <path d="M 350 425 Q 70 425 70 315" class="svg-connector" style="stroke-dasharray: 5,5;" marker-end="url(#arrow)" id="conn-cdn-client"/>
+
+                <!-- NODES -->
+                <g class="svg-node" id="node-clients">
+                  <rect x="20" y="150" width="100" height="150" rx="8"/>
+                  <text x="70" y="210">Clientes</text>
+                  <text x="70" y="235" class="sub">Smart TVs</text>
+                  <text x="70" y="250" class="sub">Móviles</text>
+                </g>
+
+                <g class="svg-node" id="node-gateway">
+                  <rect x="180" y="150" width="110" height="150" rx="8"/>
+                  <text x="235" y="210">API Gateway</text>
+                  <text x="235" y="235" class="sub">Zuul / Gateway</text>
+                  <text x="235" y="250" class="sub">Auth & Ruteo</text>
+                </g>
+
+                <g class="svg-node" id="node-auth">
+                  <rect x="350" y="60" width="140" height="60" rx="6"/>
+                  <text x="420" y="90">Auth & User Service</text>
+                  <text x="420" y="105" class="sub">Gestión Cuentas</text>
+                </g>
+
+                <g class="svg-node" id="node-catalog">
+                  <rect x="350" y="195" width="140" height="60" rx="6"/>
+                  <text x="420" y="225">Catalog Service</text>
+                  <text x="420" y="240" class="sub">Metadatos Video</text>
+                </g>
+
+                <g class="svg-node" id="node-streaming">
+                  <rect x="350" y="330" width="140" height="60" rx="6"/>
+                  <text x="420" y="360">Streaming Service</text>
+                  <text x="420" y="375" class="sub">Control de Flujo</text>
+                </g>
+
+                <g class="svg-node" id="node-userdb">
+                  <ellipse cx="630" cy="90" rx="40" ry="25"/>
+                  <text x="630" y="93">User DB</text>
+                  <text x="630" y="105" class="sub">PostgreSQL</text>
+                </g>
+
+                <g class="svg-node" id="node-catalogdb">
+                  <ellipse cx="630" cy="225" rx="40" ry="25"/>
+                  <text x="630" y="228">Catalog DB</text>
+                  <text x="630" y="240" class="sub">MongoDB</text>
+                </g>
+
+                <g class="svg-node" id="node-kafka">
+                  <rect x="350" y="270" width="140" height="30" rx="4"/>
+                  <text x="420" y="288">Kafka Event Broker</text>
+                </g>
+
+                <g class="svg-node" id="node-cdn">
+                  <rect x="350" y="410" width="140" height="30" rx="4"/>
+                  <text x="420" y="428">Open Connect CDN</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Tooltip info output -->
+            <div class="diagram-info-panel" id="diagram-info-box">
+              <h3 class="diagram-info-title" id="diagram-title">API Gateway</h3>
+              <p class="diagram-info-desc" id="diagram-desc">Enrutador perimetral centralizado para autenticación de peticiones y balanceo de carga.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Amazon -->
+        <div class="tab-panel" id="case-amazon">
+          <h3 style="font-size: 1.5rem; color: var(--color-warning); margin-bottom: 15px;">Caso 2: Amazon (Comercio Electrónico Descentralizado)</h3>
+          
+          <table class="comp-table">
+            <tr>
+              <td class="label">¿Qué estilo utiliza?</td>
+              <td class="example">
+                <span class="highlight">Microservicios Coreografiados + Descentralización Organizacional de Datos (Database per Service)</span>.<br>
+                Amazon fue pionero en estructurar sus servicios bajo la premisa de "equipos de dos pizzas" (Two-Pizza Teams). Cada módulo funcional (el botón comprar, el carrito, las recomendaciones, el inventario) corre de forma aislada, es dueño absoluto de su base de datos y se expone al resto mediante APIs estrictas.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Principales Ventajas</td>
+              <td class="example">
+                ✔ **Desacoplamiento Organizacional**: Los equipos de desarrollo trabajan de forma independiente sin interferencias cruzadas de bases de datos compartidas.<br>
+                ✔ **Escalabilidad Selectiva**: Se puede escalar masivamente el motor de cobros durante el Black Friday sin tocar el servicio de valoraciones de productos.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Desventajas Identificadas</td>
+              <td class="example">
+                ✘ **Problemas de Consistencia Física**: Al no existir una base de datos centralizada, la sincronización en tiempo real del inventario físico puede sufrir desfases temporales (*consistencia eventual*).<br>
+                ✘ **Dificultad de Pruebas**: Probar el comportamiento integrado localmente de miles de APIs distribuidas es casi imposible.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Propuesta Alternativa</td>
+              <td class="example">
+                Para un e-commerce masivo, propondría **Microservicios con Base de Datos Descentralizada e Integración de Bus de Mensajería Asíncrona (ej. RabbitMQ/SQS)** para sincronizar de manera desacoplada los cambios de inventario y despacho, utilizando bases de datos clave-valor de alta velocidad en memoria (Redis) para persistir carritos temporales.
+              </td>
+            </tr>
+          </table>
+
+          <!-- Amazon Diagram -->
+          <div class="arch-diagram-block">
+            <span style="color: var(--color-warning); font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Modelo Decoupled Checkout (Amazon-like)</span>
+            <div class="arch-layer-box orange">API Gateway (Enrutamiento perimetral)</div>
+            <div class="arch-layer-arrow">⬇</div>
+            <div style="display: flex; gap: 20px; width: 100%; justify-content: center;">
+              <div class="arch-layer-box orange" style="width: 45%;">Order Service<br><span style="font-size: 0.8rem; font-weight:400; color:var(--text-muted);">PostgreSQL (Transacciones ACID)</span></div>
+              <div class="arch-layer-box orange" style="width: 45%;">Cart Service<br><span style="font-size: 0.8rem; font-weight:400; color:var(--text-muted);">DynamoDB (Lecturas Rápidas)</span></div>
+            </div>
+            <div class="arch-layer-arrow">⬇ (Publicación de Eventos Asíncronos)</div>
+            <div class="arch-layer-box orange" style="width: 90%; background: #0f172a; border-style: dashed;">AWS SQS / EventBus (Bus de Mensajería)</div>
+            <div class="arch-layer-arrow">⬇ (Consumo Desacoplado)</div>
+            <div class="arch-layer-box orange">Inventory Service & Dispatcher</div>
+          </div>
+        </div>
+
+        <!-- Tab 3: WhatsApp -->
+        <div class="tab-panel" id="case-whatsapp">
+          <h3 style="font-size: 1.5rem; color: var(--color-success); margin-bottom: 15px;">Caso 3: WhatsApp (Mensajería en tiempo real de alta densidad)</h3>
+          
+          <table class="comp-table">
+            <tr>
+              <td class="label">¿Qué estilo utiliza?</td>
+              <td class="example">
+                <span class="highlight">Cliente-Servidor con Conexiones Sockets TCP Persistentes + Modelo de Actores (Erlang/OTP)</span>.<br>
+                WhatsApp no utiliza HTTP REST tradicional para los mensajes en el chat. Mantiene millones de conexiones sockets TCP abiertas y activas de forma permanente en cada servidor físico. Utiliza el lenguaje **Erlang** para spawnear millones de pequeños hilos (actores) asilados de memoria extremadamente eficientes.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Principales Ventajas</td>
+              <td class="example">
+                ✔ **Concurrencia Insuperable**: Un solo servidor físico puede retener más de 2 millones de conexiones sockets concurrentes activas.<br>
+                ✔ **Bajo Consumo de Hardware**: El procesamiento de Erlang tiene una sobrecarga de recursos de RAM/CPU sumamente reducida.<br>
+                ✔ **Tolerancia a fallos de conexión**: Si un actor de conexión de un teléfono falla, se muere de forma aislada sin afectar a ningún otro usuario.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Desventajas Identificadas</td>
+              <td class="example">
+                ✘ **Curva de Aprendizaje de Erlang**: Es un lenguaje funcional poco común, lo que hace complejo y costoso contratar personal de desarrollo especializado.<br>
+                ✘ **Sincronización Multidispositivo Compleja**: Al no guardar el historial en el servidor central (encriptación end-to-end), sincronizar mensajes entre la PC y el móvil requiere protocolos de red muy complejos.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Propuesta Alternativa</td>
+              <td class="example">
+                Para mensajería instantánea, propondría **Modelo de Actores distribuido utilizando Elixir** (que corre sobre la robusta máquina virtual BEAM de Erlang pero ofrece sintaxis moderna) e implementar **WebSockets persistentes** para la comunicación en tiempo real en web y móviles.
+              </td>
+            </tr>
+          </table>
+
+          <!-- WhatsApp Diagram -->
+          <div class="arch-diagram-block">
+            <span style="color: var(--color-success); font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Conexiones Persistentes y Modelo de Actores (Erlang/OTP)</span>
+            <div style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+              <div class="arch-layer-box green" style="width: 30%;">Dispositivo Cliente A<br><span style="font-size: 0.8rem; font-weight: 400; color:var(--text-muted);">Socket TCP</span></div>
+              <div class="arch-layer-box green" style="width: 30%; border-style: dashed; background: none;">Canal Remoto</div>
+              <div class="arch-layer-box green" style="width: 30%;">Dispositivo Cliente B<br><span style="font-size: 0.8rem; font-weight: 400; color:var(--text-muted);">Socket TCP</span></div>
+            </div>
+            <div class="arch-layer-arrow">⇅</div>
+            <div class="arch-layer-box green" style="width: 90%; background: #0f172a;">
+              Servidor Erlang (BEAM VM)
+              <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                <div style="background: rgba(16, 185, 129, 0.2); padding: 5px; border-radius: 4px; font-size: 0.8rem;">Actor Usuario A</div>
+                <div style="background: rgba(16, 185, 129, 0.2); padding: 5px; border-radius: 4px; font-size: 0.8rem;">Actor Usuario B</div>
+              </div>
+            </div>
+            <div class="arch-layer-arrow">⬇ (Mensaje pendiente)</div>
+            <div class="arch-layer-box green" style="width: 60%;">Base de Datos Efímera Mnesia (En Memoria)</div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Moodle -->
+        <div class="tab-panel" id="case-moodle">
+          <h3 style="font-size: 1.5rem; color: var(--color-accent); margin-bottom: 15px;">Caso 4: Moodle (Gestión de Aprendizaje Académico Modular)</h3>
+          
+          <table class="comp-table">
+            <tr>
+              <td class="label">¿Qué estilo utiliza?</td>
+              <td class="example">
+                <span class="highlight">Arquitectura Monolítica Modular en Capas (LAMP Stack)</span>.<br>
+                Moodle está escrito principalmente en PHP y se organiza en capas lógicas básicas. Su diseño es modular a nivel de código fuente: posee un Core central que expone APIs y es extendido mediante miles de carpetas de plugins (actividades, formatos de curso, bloques) que se cargan de forma integrada al interpretar la petición HTTP.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Principales Ventajas</td>
+              <td class="example">
+                ✔ **Simplicidad de Despliegue**: Extremadamente fácil de hospedar en servidores de bajo costo y configurar bases de datos únicas.<br>
+                ✔ **Extensibilidad Comunidad**: Miles de plugins listos creados a nivel mundial que se acoplan de forma directa al Core.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Desventajas Identificadas</td>
+              <td class="example">
+                ✘ **Cuello de Botella Transaccional**: Durante exámenes masivos concurrentes, miles de estudiantes escriben en la tabla única SQL al mismo tiempo, colapsando el servidor de BD.<br>
+                ✘ **Falta de Escalabilidad Elástica**: No se puede escalar solo el módulo de "cuestionarios"; se debe replicar todo el código de Moodle de forma monolítica.
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Propuesta Alternativa</td>
+              <td class="example">
+                Para un sistema nacional académico, propondría **Arquitectura en Capas Compartidas con Desacoplamiento de BD de Lectura** (Master-Slave Replication), usando bases NoSQL para logs de auditoría masivos y almacenamiento en la nube (ej. AWS S3) para archivos PDF y videos de clases.
+              </td>
+            </tr>
+          </table>
+
+          <!-- Moodle Diagram -->
+          <div class="arch-diagram-block">
+            <span style="color: var(--color-accent); font-size: 0.9rem; font-weight: 700; text-transform: uppercase;">Monolito en Capas Modular (LAMP Stack)</span>
+            <div class="arch-layer-box">Capa de Presentación Web (PHP / Blade / HTML)</div>
+            <div class="arch-layer-arrow">⬇</div>
+            <div class="arch-layer-box" style="background: #1e293b; border-style: dashed;">
+              Moodle Core API & Plugins (Lógica de Negocio)
+              <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                <div style="background: rgba(6, 182, 212, 0.2); padding: 5px; border-radius: 4px; font-size: 0.8rem;">Cuestionarios</div>
+                <div style="background: rgba(6, 182, 212, 0.2); padding: 5px; border-radius: 4px; font-size: 0.8rem;">Foros</div>
+              </div>
+            </div>
+            <div class="arch-layer-arrow">⬇</div>
+            <div class="arch-layer-box">Base de Datos Central Compartida (MySQL / PostgreSQL)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Quiz Autoevaluación -->
+    <section class="topic-section" id="quiz">
+      <h2 class="section-title">Autoevaluación de Casos de Estudio</h2>
+      <p class="intro-paragraph">
+        Responde las siguientes preguntas basadas en la arquitectura técnica de las plataformas estudiadas para verificar tu asimilación conceptual.
+      </p>
+
+      <div class="quiz-container">
+        <!-- Question 1 -->
+        <div class="quiz-question" data-q="1">
+          <h4><span class="q-num">Q1.</span> En la arquitectura de WhatsApp, ¿por qué se prefiere el Modelo de Actores (Erlang) sobre los servidores HTTP REST convencionales?</h4>
+          <div class="quiz-options">
+            <label class="quiz-option">
+              <input type="radio" name="q1" value="a">
+              <span>Porque Erlang permite compilar interfaces gráficas en Android de forma nativa.</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="q1" value="b">
+              <span>Porque permite retener millones de conexiones TCP persistentes concurrentes por servidor con un uso de memoria extremadamente bajo.</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="q1" value="c">
+              <span>Porque las llamadas HTTP REST están prohibidas por los estándares internacionales de comunicación de mensajería.</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-question" data-q="2">
+          <h4><span class="q-num">Q2.</span> ¿Cuál es el principal cuello de botella de la arquitectura monolítica modular de Moodle en periodos de alta concurrencia (como exámenes globales)?</h4>
+          <div class="quiz-options">
+            <label class="quiz-option">
+              <input type="radio" name="q2" value="a">
+              <span>La base de datos relacional central compartida, que colapsa debido a bloqueos y accesos concurrentes masivos de escritura.</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="q2" value="b">
+              <span>La falta de plugins compatibles con PHP 8.x.</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="q2" value="c">
+              <span>La latencia física provocada por el API Gateway.</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="quiz-question" data-q="3">
+          <h4><span class="q-num">Q3.</span> ¿A qué principio organizativo y técnico hace referencia la estrategia "Two-Pizza Teams" de Amazon aplicada a su arquitectura?</h4>
+          <div class="quiz-options">
+            <label class="quiz-option">
+              <input type="radio" name="q3" value="a">
+              <span>A que la base de datos debe almacenar como máximo registros de 2 gigabytes.</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="q3" value="b">
+              <span>A que un microservicio debe ser lo suficientemente pequeño y acotado como para ser desarrollado y operado por un equipo de trabajo autónomo de no más de 8-10 personas.</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="q3" value="c">
+              <span>A la limitación de usar únicamente dos lenguajes de programación diferentes para todo el sistema de ventas.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="quiz-actions">
+          <button class="submit-btn" id="submit-quiz-btn">Verificar Respuestas</button>
+          
+          <div class="quiz-results-summary" id="quiz-results">
+            <span>Calificación:</span>
+            <span class="score-badge" id="score-text">0/3</span>
+            <span id="feedback-text"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div>
+        <p class="accent-footer">Diseño y Arquitectura de Software</p>
+        <p>Departamento de Ingeniería de Sistemas</p>
+      </div>
+      <div>
+        <p>Material de Clase - UNIBE 2026</p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /* ==========================================
+       Sidebar Drawer Logic
+       ========================================== */
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebarNav = document.getElementById('sidebar-nav');
+    const menuOverlay = document.getElementById('menu-overlay');
+
+    function toggleMenu() {
+      sidebarNav.classList.toggle('open');
+      menuOverlay.classList.toggle('open');
+    }
+
+    mobileMenuToggle.addEventListener('click', toggleMenu);
+    menuOverlay.addEventListener('click', toggleMenu);
+
+    const navLinks = document.querySelectorAll('.sidebar-menu a');
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        sidebarNav.classList.remove('open');
+        menuOverlay.classList.remove('open');
+      });
+    });
+
+    /* ==========================================
+       Reading Progress Indicator
+       ========================================== */
+    window.addEventListener('scroll', () => {
+      const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('reading-progress').style.width = scrolled + '%';
+    });
+
+    /* ==========================================
+       Intersection Observer to highlight active link
+       ========================================== */
+    const sections = document.querySelectorAll('.topic-section, header.hero-section');
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.3
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${id}`) {
+              link.classList.add('active');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => observer.observe(section));
+
+    /* ==========================================
+       Interactive Main Tabs Changer
+       ========================================== */
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        if (!targetTab) return;
+
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(targetTab).classList.add('active');
+      });
+    });
+
+    /* ==========================================
+       Netflix SVG Interactive Node Highlights
+       ========================================== */
+    const componentInfo = {
+      clients: {
+        title: "Dispositivos Clientes",
+        desc: "Las aplicaciones frontales (Smart TV, móviles, etc.) que renderizan la interfaz y descargan video binario directamente de los nodos CDN."
+      },
+      gateway: {
+        title: "API Gateway (Zuul)",
+        desc: "Enrutador perimetral centralizado para autenticación de peticiones, balanceo de carga y control de tasa (Rate Limiting)."
+      },
+      auth: {
+        title: "Auth & User Microservice",
+        desc: "Servicio responsable del control de cuentas y cobros bancarios, acoplado a una base de datos relacional PostgreSQL con transacciones ACID."
+      },
+      catalog: {
+        title: "Catalog Microservice",
+        desc: "Administra metadatos de películas y series. Utiliza MongoDB para soportar esquemas flexibles de datos y búsquedas ágiles."
+      },
+      streaming: {
+        title: "Streaming Controller Service",
+        desc: "Autoriza la reproducción y devuelve la URL del nodo CDN físico más cercano del ISP del usuario. Almacena historial en Cassandra."
+      },
+      userdb: {
+        title: "Base de Datos de Usuarios (PostgreSQL)",
+        desc: "Garantiza transaccionalidad ACID estricta para compras, registros de usuarios y pasarela de pagos segura."
+      },
+      catalogdb: {
+        title: "Base de Datos de Catálogo (MongoDB)",
+        desc: "Almacenamiento NoSQL documental para metadatos flexibles del catálogo de películas y series sin bloqueos transaccionales."
+      },
+      kafka: {
+        title: "Kafka Event Broker",
+        desc: "Bus de eventos asíncronos en tiempo real para desacoplar procesos secundarios (ej. telemetría, recomendaciones) de la reproducción."
+      },
+      cdn: {
+        title: "Open Connect CDN",
+        desc: "Servidores locales con caché de video instalados dentro del data center del ISP de los usuarios para evitar tráfico y latencia."
+      }
+    };
+
+    const svgNodes = document.querySelectorAll('.svg-node');
+    const infoTitle = document.getElementById('diagram-title');
+    const infoDesc = document.getElementById('diagram-desc');
+
+    svgNodes.forEach(node => {
+      node.addEventListener('mouseenter', () => {
+        highlightNode(node.id);
+      });
+
+      node.addEventListener('click', () => {
+        highlightNode(node.id, true);
+      });
+    });
+
+    function highlightNode(nodeId, isClick = false) {
+      const key = nodeId.replace('node-', '');
+      const info = componentInfo[key];
+      if (!info) return;
+
+      infoTitle.innerText = info.title;
+      infoDesc.innerText = info.desc;
+
+      // Styling active state on rects
+      if (isClick) {
+        svgNodes.forEach(n => n.classList.remove('active'));
+        document.getElementById(nodeId).classList.add('active');
+      }
+    }
+
+    /* ==========================================
+       Quiz Interaction & Scoring Logic
+       ========================================== */
+    const correctAnswers = {
+      q1: 'b',
+      q2: 'a',
+      q3: 'b'
+    };
+
+    const optionLabels = document.querySelectorAll('.quiz-option');
+    optionLabels.forEach(label => {
+      label.addEventListener('click', () => {
+        const radio = label.querySelector('input[type="radio"]');
+        const qName = radio.name;
+        
+        document.querySelectorAll(`input[name="${qName}"]`).forEach(r => {
+          r.closest('.quiz-option').classList.remove('selected');
+        });
+        
+        label.classList.add('selected');
+      });
+    });
+
+    const submitQuizBtn = document.getElementById('submit-quiz-btn');
+    const quizResultsDiv = document.getElementById('quiz-results');
+    const scoreText = document.getElementById('score-text');
+    const feedbackText = document.getElementById('feedback-text');
+
+    submitQuizBtn.addEventListener('click', () => {
+      let score = 0;
+      const totalQuestions = 3;
+      let allAnswered = true;
+
+      for (let i = 1; i <= totalQuestions; i++) {
+        const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+        if (!selectedOption) {
+          allAnswered = false;
+          break;
+        }
+      }
+
+      if (!allAnswered) {
+        alert("Por favor, responde todas las preguntas antes de verificar.");
+        return;
+      }
+
+      for (let i = 1; i <= totalQuestions; i++) {
+        const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+        const userValue = selectedOption.value;
+        const correctValue = correctAnswers[`q${i}`];
+        
+        document.querySelectorAll(`input[name="q${i}"]`).forEach(r => {
+          const lbl = r.closest('.quiz-option');
+          lbl.classList.remove('correct', 'incorrect');
+        });
+
+        if (userValue === correctValue) {
+          score++;
+          selectedOption.closest('.quiz-option').classList.add('correct');
+        } else {
+          selectedOption.closest('.quiz-option').classList.add('incorrect');
+          document.querySelector(`input[name="q${i}"][value="${correctValue}"]`).closest('.quiz-option').classList.add('correct');
+        }
+      }
+
+      scoreText.innerText = `${score} / ${totalQuestions}`;
+      quizResultsDiv.style.display = 'flex';
+
+      if (score === totalQuestions) {
+        scoreText.className = 'score-badge pass';
+        feedbackText.innerText = "¡Excelente! Has dominado las bases y trade-offs arquitectónicos de los casos analizados.";
+        feedbackText.style.color = 'var(--color-success)';
+      } else if (score >= 1) {
+        scoreText.className = 'score-badge pass';
+        feedbackText.innerText = "Buen intento. Repasa los cuellos de botella e infraestructuras específicas.";
+        feedbackText.style.color = 'var(--color-accent)';
+      } else {
+        scoreText.className = 'score-badge fail';
+        feedbackText.innerText = "Te recomendamos repasar a profundidad los casos de estudio expuestos.";
+        feedbackText.style.color = 'var(--color-danger)';
+      }
+
+      submitQuizBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  </script>
+</body>
+</html>
