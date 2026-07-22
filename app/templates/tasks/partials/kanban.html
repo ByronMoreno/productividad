@@ -75,6 +75,21 @@
                                 Creada: {{ task.created_at_local.strftime('%d/%m/%Y %H:%M') }}
                             </div>
 
+                            {% if ns.active_session and task.started_at_local %}
+                                <div class="text-primary small mb-2" style="font-size: 0.7rem; font-weight: 500;">
+                                    <i data-lucide="play" class="me-1 text-primary" style="width: 11px; height: 11px; vertical-align: middle;"></i>
+                                    Iniciado a las: {{ task.started_at_local.strftime('%H:%M') }}
+                                </div>
+                            {% endif %}
+
+                            {% if task.status == 'DONE' and task.completed_at_local %}
+                                <div class="text-success small mb-2" style="font-size: 0.7rem; font-weight: 500;">
+                                    <i data-lucide="check-circle" class="me-1 text-success" style="width: 11px; height: 11px; vertical-align: middle;"></i>
+                                    Finalizado a las: {{ task.completed_at_local.strftime('%H:%M') }}
+                                </div>
+                            {% endif %}
+
+
 
                             <!-- Botones de Control de Temporizador en la Tarjeta -->
                             <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-light">

@@ -311,41 +311,96 @@ class AIService:
     def mock_generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date) -> list:
         """
         Generador local de Time Blocking basado en reglas.
-        Construye una agenda a partir de las 09:00 AM intercalando descansos de 15 minutos.
+        Detecta horas fijas (ej: 'a las 18:00') en el título/descripción y agenda el resto flexiblemente.
         """
         from datetime import time, timedelta, datetime
-        blocks = []
+        import re
         
-        # Empezar a las 09:00 AM
-        current_dt = datetime.combine(selected_date, time(9, 0))
-        
+        def extract_time(title, desc):
+            full_text = f"{title or ''} {desc or ''}".lower()
+            m1 = re.search(r'\b(\d{1,2}):(\d{2})\b', full_text)
+            if m1:
+                h, m = int(m1.group(1)), int(m1.group(2))
+                if 0 <= h < 24 and 0 <= m < 60:
+                    return time(h, m)
+            m2 = re.search(r'\ba\s+las\s+(\d{1,2})\b|\b(\d{1,2})\s*h(oras)?\b', full_text)
+            if m2:
+                val = m2.group(1) or m2.group(2)
+                h = int(val)
+                if 0 <= h < 24:
+                    return time(h, 0)
+            return None
+
         # Filtrar tareas aptas según energía si no están en progreso
         max_energy = {1: 2, 2: 4, 3: 5}[energy_limit]
         tasks_to_schedule = [t for t in pending_tasks if t.energy <= max_energy or t.status == 'PROGRESS']
-        
-        # Si no hay tareas aptas, programar al menos la de hoy
         if not tasks_to_schedule and pending_tasks:
             tasks_to_schedule = [pending_tasks[0]]
-            
+
+        blocks = []
+        fixed_blocks = []
+        flexible_tasks = []
+
+        # Paso A: Procesar primero tareas con hora fija
         for task in tasks_to_schedule:
-            # Duración de la tarea (mínimo 30 min)
+            t_fixed = extract_time(task.title, task.description)
+            if t_fixed:
+                duration = max(task.estimated_time or 30, 30)
+                start_dt = datetime.combine(selected_date, t_fixed)
+                end_dt = start_dt + timedelta(minutes=duration)
+                fixed_blocks.append({
+                    "title": task.title,
+                    "task_id": task.id,
+                    "start_dt": start_dt,
+                    "end_dt": end_dt
+                })
+            else:
+                flexible_tasks.append(task)
+
+        # Añadir las fijas a la lista final de bloques
+        for fb in fixed_blocks:
+            blocks.append({
+                "title": fb["title"],
+                "task_id": fb["task_id"],
+                "start_time": fb["start_dt"].time().strftime('%H:%M'),
+                "end_time": fb["end_dt"].time().strftime('%H:%M')
+            })
+
+        # Paso B: Distribuir tareas flexibles a partir de las 09:00 AM cuidando superposiciones
+        current_dt = datetime.combine(selected_date, time(9, 0))
+        
+        for task in flexible_tasks:
             duration = max(task.estimated_time or 30, 30)
             
-            start_t = current_dt.time()
-            end_dt = current_dt + timedelta(minutes=duration)
-            end_t = end_dt.time()
+            # Buscar un hueco donde la tarea no choque con las fijas
+            while True:
+                potential_end = current_dt + timedelta(minutes=duration)
+                
+                # Verificar si choca con algún bloque fijo
+                collision = False
+                for fb in fixed_blocks:
+                     # Si se superponen los rangos
+                     if not (potential_end <= fb["start_dt"] or current_dt >= fb["end_dt"]):
+                         collision = True
+                         # Mover la hora de inicio al final de la tarea fija que causó la colisión
+                         current_dt = fb["end_dt"] + timedelta(minutes=15)
+                         break
+                
+                if not collision:
+                    break
             
             blocks.append({
                 "title": task.title,
                 "task_id": task.id,
-                "start_time": start_t.strftime('%H:%M'),
-                "end_time": end_t.strftime('%H:%M')
+                "start_time": current_dt.time().strftime('%H:%M'),
+                "end_time": potential_end.time().strftime('%H:%M')
             })
             
-            # Mover el cursor de tiempo (tarea + 15 min de descanso zen)
-            current_dt = end_dt + timedelta(minutes=15)
-            
-        # Si no hay tareas agendadas, crear un bloque libre de planificación
+            current_dt = potential_end + timedelta(minutes=15)
+
+        # Ordenar todos los bloques cronológicamente
+        blocks.sort(key=lambda x: x["start_time"])
+
         if not blocks:
             blocks.append({
                 "title": "Planificación y Lectura Ligera",
@@ -359,8 +414,9 @@ class AIService:
                 "start_time": "10:15",
                 "end_time": "11:00"
             })
-            
+
         return blocks
+
 
     @staticmethod
     def generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date) -> list:

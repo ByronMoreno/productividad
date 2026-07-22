@@ -22,6 +22,30 @@ class Task(db.Model):
             return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
         return None
 
+    @property
+    def started_at_local(self):
+
+        active_session = None
+        for s in self.focus_sessions:
+            if s.end_time is None:
+                active_session = s
+                break
+        if active_session and active_session.start_time:
+            utc_dt = active_session.start_time.replace(tzinfo=timezone.utc)
+            return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
+        return None
+
+    @property
+    def completed_at_local(self):
+        closed_sessions = [s for s in self.focus_sessions if s.end_time is not None]
+        if closed_sessions:
+            closed_sessions.sort(key=lambda x: x.end_time, reverse=True)
+            last_session = closed_sessions[0]
+            utc_dt = last_session.end_time.replace(tzinfo=timezone.utc)
+            return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
+        return None
+
+
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=True)
     project = db.relationship('Project', backref=db.backref('tasks', lazy=True, cascade="all, delete-orphan"))
