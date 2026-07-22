@@ -7,8 +7,9 @@
         ('DONE', 'Completado', 'check-circle')
     ] %}
         <div class="col">
-            <div class="kanban-col h-100">
+            <div class="kanban-col h-100" ondragover="allowDrop(event)" ondrop="drop(event, '{{ status }}')">
                 <div class="d-flex justify-content-between align-items-center mb-3">
+
                     <h3 class="h6 fw-bold mb-0 text-truncate">
                         <i data-lucide="{{ icon }}" class="me-2 text-zen-muted"></i>{{ display_name }}
                     </h3>
@@ -26,7 +27,20 @@
                             {% endif %}
                         {% endfor %}
 
-                        <div class="kanban-task" style="border-left: 3px solid {{ task.project.color_hex if task.project else 'var(--border)' }};">
+                        {% set border_color = 'var(--border)' %}
+                        {% if task.project %}
+                            {% set border_color = task.project.color_hex %}
+                        {% else %}
+                            {% if task.priority == 'HIGH' %}
+                                {% set border_color = '#ef4444' %}
+                            {% elif task.priority == 'MEDIUM' %}
+                                {% set border_color = '#f59e0b' %}
+                            {% elif task.priority == 'LOW' %}
+                                {% set border_color = '#3b82f6' %}
+                            {% endif %}
+                        {% endif %}
+                        <div class="kanban-task" draggable="true" ondragstart="drag(event)" id="task-{{ task.id }}" style="border-left: 3px solid {{ border_color }}; cursor: grab;">
+
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h4 class="h6 fw-bold mb-0" title="Editar tarea" 
                                     style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" 

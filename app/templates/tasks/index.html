@@ -91,4 +91,62 @@
         </div>
     </div>
 </div>
+
+<script>
+    function allowDrop(ev) {
+        ev.preventDefault();
+        const col = ev.target.closest('.kanban-col');
+        if (col) {
+            col.style.background = 'var(--surface-hover)';
+            col.style.borderStyle = 'dashed';
+            col.style.borderColor = 'var(--primary)';
+        }
+    }
+
+    document.addEventListener('dragleave', function(ev) {
+        const col = ev.target.closest('.kanban-col');
+        if (col && !col.contains(ev.relatedTarget)) {
+            col.style.background = '';
+            col.style.borderStyle = '';
+            col.style.borderColor = '';
+        }
+    });
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text/plain", ev.target.id);
+        ev.target.style.opacity = '0.4';
+    }
+
+    document.addEventListener('dragend', function(ev) {
+        if (ev.target.classList.contains('kanban-task')) {
+            ev.target.style.opacity = '1';
+        }
+        document.querySelectorAll('.kanban-col').forEach(col => {
+            col.style.background = '';
+            col.style.borderStyle = '';
+            col.style.borderColor = '';
+        });
+    });
+
+    function drop(ev, status) {
+        ev.preventDefault();
+        document.querySelectorAll('.kanban-col').forEach(col => {
+            col.style.background = '';
+            col.style.borderStyle = '';
+            col.style.borderColor = '';
+        });
+
+        const data = ev.dataTransfer.getData("text/plain");
+        const taskElement = document.getElementById(data);
+        if (!taskElement) return;
+
+        const taskId = data.replace("task-", "");
+
+        htmx.ajax('POST', `/tasks/update-status/${taskId}?status=${status}`, {
+            target: '#kanban-board',
+            swap: 'innerHTML'
+        });
+    }
+</script>
 {% endblock %}
+

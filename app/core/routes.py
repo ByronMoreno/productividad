@@ -25,10 +25,13 @@ def index():
         Task.status.in_(['TODAY', 'PROGRESS']),
         Task.energy <= max_energy
     ).all()
+    if not today_tasks:
+        today_tasks = Task.query.filter(
+            Task.status.in_(['TODAY', 'PROGRESS'])
+        ).all()
     
     active_task = Task.query.filter(
-        Task.status == 'PROGRESS',
-        Task.energy <= max_energy
+        Task.status == 'PROGRESS'
     ).first()
     
     if not active_task:
@@ -36,6 +39,11 @@ def index():
             Task.status == 'TODAY',
             Task.energy <= max_energy
         ).order_by(Task.priority.desc(), Task.energy.desc()).first()
+        
+    if not active_task:
+        active_task = Task.query.filter(
+            Task.status == 'TODAY'
+        ).order_by(Task.energy.asc(), Task.priority.desc()).first()
 
     accumulated_seconds = 0
     if active_task:
@@ -53,6 +61,7 @@ def index():
                            accumulated_seconds=accumulated_seconds,
                            today=today,
                            status=status)
+
 
 
 @core_bp.route('/set-energy', methods=['POST'])
