@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from app.core.database import db
 
 class Task(db.Model):
@@ -13,6 +14,14 @@ class Task(db.Model):
     estimated_time = db.Column(db.Integer, default=30) # en minutos
     due_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def created_at_local(self):
+        if self.created_at:
+            utc_dt = self.created_at.replace(tzinfo=timezone.utc)
+            return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
+        return None
+
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=True)
     project = db.relationship('Project', backref=db.backref('tasks', lazy=True, cascade="all, delete-orphan"))
