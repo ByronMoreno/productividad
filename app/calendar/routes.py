@@ -67,11 +67,12 @@ def autogenerate():
     date_str = request.form.get('date')
     selected_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else date.today()
 
-    from app.core.models import SystemStatus
+    from app.core.models import UserStatus
     from app.ai.services import AIService
     
-    status = SystemStatus.query.first()
+    status = UserStatus.get_status()
     energy_limit = status.current_energy_limit if status else 3
+
     
     # Obtener las tareas del día
     tasks = Task.query.filter(Task.status.in_(['TODAY', 'PROGRESS'])).all()
