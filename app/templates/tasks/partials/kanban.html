@@ -94,7 +94,7 @@
                                         </span>
                                         {% if task.due_date %}
                                             <span class="task-due-badge" title="Fecha límite">
-                                                <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>{{ task.due_date.strftime('%d/%m') }}
+                                                <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>Fin: {{ task.due_date.strftime('%d/%m/%Y') }}
                                             </span>
                                         {% endif %}
                                     </div>
@@ -102,6 +102,13 @@
                                         {% for i in range(task.energy) %}★{% endfor %}
                                     </span>
                                 </div>
+
+                                <!-- Fecha de Creación -->
+                                <div class="task-created-date mb-2">
+                                    <i data-lucide="calendar-plus" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                    <span>Creada: {{ task.created_at_local.strftime('%d/%m/%Y %H:%M') }}</span>
+                                </div>
+
 
                                 <!-- Bitácora / Segundo Cerebro indicador -->
                                 {% if task.knowledge_nodes.count() > 0 %}

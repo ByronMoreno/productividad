@@ -572,4 +572,15 @@ svg.lucide {
     color: var(--text) !important;
 }
 
+/* Fecha de Creación */
+.task-created-date {
+    font-size: 0.72rem !important;
+    color: var(--text-muted) !important;
+    opacity: 0.75;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
 
