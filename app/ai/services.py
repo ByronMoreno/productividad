@@ -422,7 +422,7 @@ class AIService:
 
 
     @staticmethod
-    def generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date) -> list:
+    def generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date, daily_objective: str = None) -> list:
         api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
             return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date)
@@ -435,15 +435,19 @@ class AIService:
             tasks_summary.append(f"- ID: {t.id} | {t.title} [Estimado: {t.estimated_time}m, Energía: {t.energy}/5]")
         tasks_str = "\n".join(tasks_summary) if tasks_summary else "No hay tareas pendientes."
         
-        system_prompt = (
-            "Eres el planificador de tiempo zen de TaskFlow OS.\n"
+        objective_prompt = ""
+        if daily_objective:
+            objective_prompt = f"- OBJETIVO PRIORITARIO DE HOY: '{daily_objective}'\n(Por favor, planifica bloques de alta energía o los primeros bloques del día específicamente para avanzar en este objetivo).\n"
 
+        system_prompt = (
+            "Eres el planificador de tiempo zen de TaskFlow OS.\n\n"
             "Tu objetivo es crear el itinerario de Time Blocking para el día de hoy.\n"
             "Debes organizar las tareas del usuario en bloques lógicos, empezando a las 09:00 AM.\n"
             "Instrucciones:\n"
             "- Respeta el límite de energía actual del usuario. No agendes tareas pesadas si su energía es Baja.\n"
             "- Intercala descansos zen de 10 a 15 minutos entre tareas.\n"
             "- Si una tarea ya está en proceso (PROGRESS), agéndala primero.\n"
+            f"{objective_prompt}"
             "- Responde con un objeto JSON que contenga la llave \"blocks\" con el array de bloques:\n"
             "{\n"
             "  \"blocks\": [\n"
@@ -458,11 +462,16 @@ class AIService:
         )
         
         try:
+            user_content = f"Organiza mi día. Energía: {energy_desc}."
+            if daily_objective:
+                user_content += f" Mi objetivo de hoy es: '{daily_objective}'."
+            user_content += f" Tareas disponibles:\n{tasks_str}"
+            
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Organiza mi día. Energía: {energy_desc}. Tareas disponibles:\n{tasks_str}"}
+                    {"role": "user", "content": user_content}
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.3
@@ -473,5 +482,6 @@ class AIService:
         except Exception as e:
             print(f"Error generando Time Blocking con OpenAI API: {e}. Usando generador local.")
             return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date)
+
 
 

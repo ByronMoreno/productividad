@@ -80,15 +80,20 @@ def autogenerate():
 
     from app.core.models import UserStatus
     from app.ai.services import AIService
+    from app.auth.models import DailyObjective
     
     status = UserStatus.get_status(user_id=u_id)
     energy_limit = status.current_energy_limit if status else 3
 
-    # Obtener las tareas del día
-    tasks = Task.query.filter(Task.status.in_(['TODAY', 'PROGRESS']), Task.user_id == u_id).all()
+    # Obtener el objetivo diario de hoy para pasarlo a la IA
+    daily_obj = DailyObjective.query.filter_by(user_id=u_id, date=date.today()).first()
+    daily_obj_content = daily_obj.content if daily_obj else None
+
+    # Obtener todas las tareas activas (no DONE) para dar a la IA una visión completa para agendar
+    tasks = Task.query.filter(Task.status != 'DONE', Task.user_id == u_id).all()
     
     # Generar bloques con IA o Simulador
-    ai_blocks = AIService.generate_time_blocking(energy_limit, tasks, selected_date)
+    ai_blocks = AIService.generate_time_blocking(energy_limit, tasks, selected_date, daily_objective=daily_obj_content)
     
     # Eliminar bloques anteriores para este día
     TimeBlock.query.filter_by(date=selected_date, user_id=u_id).delete()
@@ -103,8 +108,12 @@ def autogenerate():
             
         task_id = ab.get('task_id')
         if task_id:
-            db_task = db.session.get(Task, task_id)
-            if not db_task or db_task.user_id != u_id:
+            try:
+                task_id = int(task_id)
+                db_task = db.session.get(Task, task_id)
+                if not db_task or db_task.user_id != u_id:
+                    task_id = None
+            except (ValueError, TypeError):
                 task_id = None
                 
         block = TimeBlock(
@@ -118,6 +127,7 @@ def autogenerate():
         db.session.add(block)
         
     db.session.commit()
+
     
     blocks = TimeBlock.query.filter_by(date=selected_date, user_id=u_id).order_by(TimeBlock.start_time).all()
     if request.headers.get('HX-Request'):
