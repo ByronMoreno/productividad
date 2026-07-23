@@ -1,0 +1,56 @@
+{% if daily_objective %}
+    <!-- Objetivo Establecido -->
+    <div class="daily-objective-card d-flex align-items-center justify-content-between p-3 rounded-4 border {% if daily_objective.completed %}completed{% endif %}">
+        <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0">
+            <!-- Checkbox de Completado -->
+            <div class="form-check m-0 d-flex align-items-center">
+                <input class="form-check-input daily-objective-checkbox" 
+                       type="checkbox" 
+                       {% if daily_objective.completed %}checked{% endif %}
+                       hx-post="{{ url_for('tasks.toggle_daily_objective') }}"
+                       hx-target="#daily-objective-container"
+                       hx-trigger="change"
+                       title="Marcar como completado">
+            </div>
+            <!-- Contenido del Objetivo -->
+            <div class="min-w-0 flex-grow-1">
+                <span class="daily-objective-label text-uppercase text-primary small d-block mb-1">Prioridad Única del Día</span>
+                <p class="daily-objective-text mb-0 text-truncate-2 {% if daily_objective.completed %}text-muted text-decoration-line-through{% endif %}" title="{{ daily_objective.content }}">
+                    {{ daily_objective.content }}
+                </p>
+            </div>
+        </div>
+        <!-- Botón de Borrar (para establecer uno nuevo) -->
+        <button class="btn btn-link text-zen-muted p-2 ms-2 rounded-circle hover-bg-danger-light" 
+                hx-delete="{{ url_for('tasks.delete_daily_objective') }}"
+                hx-target="#daily-objective-container"
+                hx-confirm="¿Quieres eliminar tu objetivo de hoy para definir uno nuevo?"
+                title="Eliminar objetivo">
+            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+        </button>
+    </div>
+{% else %}
+    <!-- Sin Objetivo Establecido -->
+    <div class="daily-objective-empty p-3 rounded-4 border">
+        <form hx-post="{{ url_for('tasks.set_daily_objective') }}" hx-target="#daily-objective-container" class="d-flex gap-2 align-items-center">
+            <div class="flex-grow-1 position-relative">
+                <i data-lucide="target" class="text-primary position-absolute top-50 start-0 translate-middle-y ms-3" style="width: 16px; height: 16px;"></i>
+                <input type="text" 
+                       name="content" 
+                       class="form-control daily-objective-input py-2 ps-5 pe-3" 
+                       placeholder="Escribe tu único objetivo para el día de hoy (The One Thing)..." 
+                       required 
+                       maxlength="500"
+                       autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-zen px-4">
+                Definir Enfoque
+            </button>
+        </form>
+    </div>
+{% endif %}
+
+<script>
+    // Inicializar iconos de Lucide cargados por HTMX
+    lucide.createIcons();
+</script>

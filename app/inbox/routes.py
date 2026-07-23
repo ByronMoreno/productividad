@@ -48,3 +48,41 @@ def delete(item_id):
     if request.headers.get('HX-Request'):
         return render_template('inbox/partials/list.html', items=items)
     return redirect(url_for('inbox.index'))
+
+
+@inbox_bp.route('/process/<int:item_id>', methods=['POST'])
+@login_required
+def process(item_id):
+    u_id = session['user_id']
+    item = db.get_or_404(InboxItem, item_id)
+    if item.user_id != u_id:
+        return redirect(url_for('core.index'))
+    
+    title = request.form.get('title')
+    description = request.form.get('description')
+    project_id = request.form.get('project_id')
+    status = request.form.get('status', 'PENDING')
+    estimated_time = request.form.get('estimated_time', type=int) or 30
+    energy = request.form.get('energy', type=int) or 3
+
+    # Crear la tarea
+    from app.tasks.models import Task
+    task = Task(
+        title=title,
+        description=description,
+        project_id=int(project_id) if (project_id and project_id.strip()) else None,
+        status=status,
+        estimated_time=estimated_time,
+        energy=energy,
+        user_id=u_id
+    )
+    db.session.add(task)
+    
+    # Marcar el item del inbox como procesado
+    item.is_processed = True
+    item.processed_at = datetime.utcnow()
+    
+    db.session.commit()
+    
+    return redirect(url_for('core.index'))
+

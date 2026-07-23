@@ -143,6 +143,11 @@ def log_block(session_id):
         status = UserStatus.get_status(user_id=u_id)
         tasks = Task.query.filter(Task.status != 'DONE', Task.user_id == u_id).all()
         
+        from datetime import date
+        from app.auth.models import DailyObjective
+        daily_obj = DailyObjective.query.filter_by(user_id=u_id, date=date.today()).first()
+        daily_obj_content = daily_obj.content if daily_obj else None
+        
         user_queries = {
             'NOT_KNOW_HOW': "Estoy bloqueado porque no sé cómo continuar con la tarea.",
             'DISTRACTED': "Me distraje con otra cosa y procrastiné.",
@@ -153,8 +158,10 @@ def log_block(session_id):
         coach_tip = AIService.get_coach_response(
             user_message=query,
             energy_limit=status.current_energy_limit,
-            pending_tasks=tasks
+            pending_tasks=tasks,
+            daily_objective=daily_obj_content
         )
+
         distractions_count = focus_sess.distractions
     else:
         distractions_count = 0

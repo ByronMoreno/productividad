@@ -2,10 +2,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from app.core.database import db
 from app.tasks.models import Task
 from app.projects.models import Project
-from datetime import datetime
+from datetime import datetime, date
 from app.auth.utils import login_required
+from app.auth.models import DailyObjective
 
 tasks_bp = Blueprint('tasks', __name__)
+
 
 def get_kanban_dict(u_id):
     tasks = Task.query.filter_by(user_id=u_id).all()
@@ -23,10 +25,12 @@ def index():
     u_id = session['user_id']
     kanban = get_kanban_dict(u_id)
     projects = Project.query.filter_by(user_id=u_id).order_by(Project.name).all()
+    daily_obj = DailyObjective.query.filter_by(user_id=u_id, date=date.today()).first()
     
     if request.headers.get('HX-Request'):
         return render_template('tasks/partials/kanban.html', kanban=kanban)
-    return render_template('tasks/index.html', kanban=kanban, projects=projects)
+    return render_template('tasks/index.html', kanban=kanban, projects=projects, daily_objective=daily_obj)
+
 
 @tasks_bp.route('/add', methods=['POST'])
 @login_required
@@ -177,4 +181,49 @@ def delegate(task_id):
             
     kanban = get_kanban_dict(u_id)
     return render_template('tasks/partials/kanban.html', kanban=kanban)
+
+
+@tasks_bp.route('/daily-objective', methods=['POST'])
+@login_required
+def set_daily_objective():
+    u_id = session['user_id']
+    content = request.form.get('content', '').strip()
+    if not content:
+        return "", 400
+    
+    today_date = date.today()
+    obj = DailyObjective.query.filter_by(user_id=u_id, date=today_date).first()
+    if not obj:
+        obj = DailyObjective(user_id=u_id, date=today_date, content=content)
+        db.session.add(obj)
+    else:
+        obj.content = content
+    db.session.commit()
+    
+    return render_template('tasks/partials/daily_objective.html', daily_objective=obj)
+
+
+@tasks_bp.route('/daily-objective/toggle', methods=['POST'])
+@login_required
+def toggle_daily_objective():
+    u_id = session['user_id']
+    today_date = date.today()
+    obj = DailyObjective.query.filter_by(user_id=u_id, date=today_date).first()
+    if obj:
+        obj.completed = not obj.completed
+        db.session.commit()
+    return render_template('tasks/partials/daily_objective.html', daily_objective=obj)
+
+
+@tasks_bp.route('/daily-objective', methods=['DELETE'])
+@login_required
+def delete_daily_objective():
+    u_id = session['user_id']
+    today_date = date.today()
+    obj = DailyObjective.query.filter_by(user_id=u_id, date=today_date).first()
+    if obj:
+        db.session.delete(obj)
+        db.session.commit()
+    return render_template('tasks/partials/daily_objective.html', daily_objective=None)
+
 

@@ -1,6 +1,7 @@
 from app.core.database import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, date
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -57,4 +58,20 @@ class Group(db.Model):
             'description': self.description,
             'created_at': self.created_at.isoformat()
         }
+
+
+class DailyObjective(db.Model):
+    __tablename__ = 'daily_objectives'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    content = db.Column(db.String(500), nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'date', name='_user_daily_objective_uc'),)
+
+    # Relación inversa
+    user = db.relationship('User', backref=db.backref('daily_objectives', cascade='all, delete-orphan', lazy='dynamic'))
+
 
