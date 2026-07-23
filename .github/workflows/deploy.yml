@@ -49,7 +49,7 @@ jobs:
           password: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
-            mkdir -p /home/${{ secrets.VPS_USER }}/productividad
+            mkdir -p /home/${{ secrets.VPS_USER }}/app
 
       - name: Copy stack.yml and Makefile to VPS
         uses: appleboy/scp-action@v1
@@ -59,7 +59,7 @@ jobs:
           password: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           source: "stack.yml,Makefile"
-          target: "/home/${{ secrets.VPS_USER }}/productividad"
+          target: "/home/${{ secrets.VPS_USER }}/app"
 
       - name: Execute Swarm Deployment on VPS
         uses: appleboy/ssh-action@v1
@@ -70,9 +70,9 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             echo "🚀 Iniciando despliegue"
-            cd /home/${{ secrets.VPS_USER }}/productividad
+            cd /home/${{ secrets.VPS_USER }}/app
             
-            # Escribir archivo .env directamente en el VPS de forma segura
+            # Escribir archivo .env directamente en el VPS
             echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" > .env
             echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
@@ -89,6 +89,9 @@ jobs:
             set -a
             [ -f .env ] && . .env
             set +a
+            
+            # Limpiar red bridge conflictiva previa si existiese
+            docker network rm productividad_productivity-net || true
             
             echo "🔄 Actualizando stack en Docker Swarm"
             docker stack deploy -c stack.yml productividad
