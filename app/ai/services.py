@@ -311,7 +311,7 @@ class AIService:
             return AIService.mock_agent_debate(energy_limit, pending_tasks)
 
     @staticmethod
-    def mock_generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date) -> list:
+    def mock_generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date, daily_objective: str = None) -> list:
         """
         Generador local de Time Blocking basado en reglas.
         Detecta horas fijas (ej: 'a las 18:00') en el título/descripción y agenda el resto flexiblemente.
@@ -405,18 +405,56 @@ class AIService:
         blocks.sort(key=lambda x: x["start_time"])
 
         if not blocks:
-            blocks.append({
-                "title": "Planificación y Lectura Ligera",
-                "task_id": None,
-                "start_time": "09:00",
-                "end_time": "10:00"
-            })
-            blocks.append({
-                "title": "Descanso y Meditación Zen",
-                "task_id": None,
-                "start_time": "10:15",
-                "end_time": "11:00"
-            })
+            if daily_objective:
+                blocks.append({
+                    "title": f"Boceto y Preparación: {daily_objective}",
+                    "task_id": None,
+                    "start_time": "09:00",
+                    "end_time": "10:30"
+                })
+                blocks.append({
+                    "title": "Descanso y Meditación Zen",
+                    "task_id": None,
+                    "start_time": "10:45",
+                    "end_time": "11:15"
+                })
+                blocks.append({
+                    "title": f"Ejecución Concentrada: {daily_objective}",
+                    "task_id": None,
+                    "start_time": "11:30",
+                    "end_time": "13:00"
+                })
+                blocks.append({
+                    "title": "Revisión Final y Cierre del Objetivo",
+                    "task_id": None,
+                    "start_time": "15:00",
+                    "end_time": "16:00"
+                })
+            else:
+                blocks.append({
+                    "title": "Planificación y Lectura Ligera",
+                    "task_id": None,
+                    "start_time": "09:00",
+                    "end_time": "10:00"
+                })
+                blocks.append({
+                    "title": "Descanso y Meditación Zen",
+                    "task_id": None,
+                    "start_time": "10:15",
+                    "end_time": "11:00"
+                })
+                blocks.append({
+                    "title": "Revisión de Pendientes y Aprendizaje",
+                    "task_id": None,
+                    "start_time": "11:15",
+                    "end_time": "12:30"
+                })
+                blocks.append({
+                    "title": "Desarrollo y Estructuración de Proyectos",
+                    "task_id": None,
+                    "start_time": "14:00",
+                    "end_time": "16:00"
+                })
 
         return blocks
 
@@ -425,15 +463,30 @@ class AIService:
     def generate_time_blocking(energy_limit: int, pending_tasks: list, selected_date, daily_objective: str = None) -> list:
         api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
-            return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date)
+            return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date, daily_objective)
             
         client = OpenAI(api_key=api_key)
         energy_desc = {1: "Baja 🔋", 2: "Media ⚡", 3: "Alta 🚀"}[energy_limit]
         
-        tasks_summary = []
-        for t in pending_tasks:
-            tasks_summary.append(f"- ID: {t.id} | {t.title} [Estimado: {t.estimated_time}m, Energía: {t.energy}/5]")
-        tasks_str = "\n".join(tasks_summary) if tasks_summary else "No hay tareas pendientes."
+        if pending_tasks:
+            tasks_summary = []
+            for t in pending_tasks:
+                tasks_summary.append(f"- ID: {t.id} | {t.title} [Estimado: {t.estimated_time}m, Energía: {t.energy}/5]")
+            tasks_str = "\n".join(tasks_summary)
+        else:
+            if daily_objective:
+                tasks_str = (
+                    "No hay tareas pendientes en el Kanban, pero el usuario ha definido un Objetivo Diario.\n"
+                    f"Tu meta es proponer una serie de bloques creativos que desglosen paso a paso el siguiente Objetivo Diario: '{daily_objective}', "
+                    "organizados en fases lógicas para que el usuario pueda avanzar y cumplirlo de forma zen hoy."
+                )
+            else:
+                tasks_str = (
+                    "No hay tareas pendientes en el Kanban ni Objetivo Diario definido.\n"
+                    "Crea una agenda ideal zen diaria equilibrada y sugerida para un profesional del desarrollo/investigación. "
+                    "Propón bloques creativos realistas como: 'Planificación de la Semana', 'Estudio de Tecnologías Emergentes', "
+                    "'Refactorización de Código Personal', 'Lectura Técnica' y 'Pausas de Meditación/Estiramiento'."
+                )
         
         objective_prompt = ""
         if daily_objective:
@@ -478,10 +531,10 @@ class AIService:
             )
             result_content = response.choices[0].message.content
             data = json.loads(result_content)
-            return data.get("blocks", AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date))
+            return data.get("blocks", AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date, daily_objective))
         except Exception as e:
             print(f"Error generando Time Blocking con OpenAI API: {e}. Usando generador local.")
-            return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date)
+            return AIService.mock_generate_time_blocking(energy_limit, pending_tasks, selected_date, daily_objective)
 
 
 
