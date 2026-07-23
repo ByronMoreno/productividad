@@ -714,8 +714,8 @@ svg.lucide {
     border-bottom: 2px solid var(--primary) !important;
     border-radius: 0 !important;
 }
-
-
-
-
-
+/* Hacer visible el icono del selector de fecha nativo (calendario) en modo oscuro */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) !important;
+    cursor: pointer;
+}
