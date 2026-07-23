@@ -174,7 +174,7 @@
         const width = startWidth + (e.clientX - startX);
         if (width >= 150 && width <= 600) {
             resizingCol.style.width = width + 'px';
-            resizingCol.style.flex = `0 0 ${width}px`;
+            resizingCol.style.flex = `1 1 ${width}px`;
             const colId = resizingCol.id.replace('col-', '');
             localStorage.setItem(`kanban-col-width-${colId}`, width + 'px');
         }
@@ -231,7 +231,7 @@
                 const storedWidth = localStorage.getItem(`kanban-col-width-${status}`);
                 if (storedWidth) {
                     col.style.width = storedWidth;
-                    col.style.flex = `0 0 ${storedWidth}`;
+                    col.style.flex = `1 1 ${storedWidth}`;
                 } else {
                     col.style.width = '';
                     col.style.flex = ''; // Flexbox proporcional
@@ -239,6 +239,7 @@
             }
         });
     }
+
 
     // Inicializar al cargar la página
     document.addEventListener('DOMContentLoaded', () => {
