@@ -147,6 +147,92 @@
             swap: 'innerHTML'
         });
     }
+
+    /* --- INTERACTIVIDAD KANBAN: RESIZE Y COLLAPSE --- */
+
+    let currentResizer = null;
+    let startX, startWidth, resizingCol = null;
+
+    function initResize(e, columnId) {
+        e.preventDefault();
+        const col = document.getElementById(columnId);
+        if (!col) return;
+
+        resizingCol = col;
+        startX = e.clientX;
+        startWidth = parseInt(document.defaultView.getComputedStyle(col).width, 10);
+
+        document.documentElement.addEventListener('mousemove', doResize, false);
+        document.documentElement.addEventListener('mouseup', stopResize, false);
+        col.querySelector('.kanban-resizer').classList.add('resizing');
+    }
+
+    function doResize(e) {
+        if (!resizingCol) return;
+        const width = startWidth + (e.clientX - startX);
+        if (width >= 200 && width <= 600) { // Límites de ancho
+            resizingCol.style.width = width + 'px';
+            // Guardar en localStorage
+            const colId = resizingCol.id.replace('col-', '');
+            localStorage.setItem(`kanban-col-width-${colId}`, width + 'px');
+        }
+    }
+
+    function stopResize(e) {
+        if (resizingCol) {
+            resizingCol.querySelector('.kanban-resizer').classList.remove('resizing');
+        }
+        document.documentElement.removeEventListener('mousemove', doResize, false);
+        document.documentElement.removeEventListener('mouseup', stopResize, false);
+        resizingCol = null;
+    }
+
+    function toggleCollapseColumn(status) {
+        if (status === 'PROGRESS') return; // En proceso no se puede colapsar
+
+        const col = document.getElementById(`col-${status}`);
+        if (!col) return;
+
+        const isCollapsed = col.classList.toggle('collapsed');
+        localStorage.setItem(`kanban-col-collapsed-${status}`, isCollapsed ? 'true' : 'false');
+    }
+
+    function applyStoredColumnStates() {
+        const statuses = ['PENDING', 'TODAY', 'PROGRESS', 'WAITING', 'DONE'];
+        
+        statuses.forEach(status => {
+            const col = document.getElementById(`col-${status}`);
+            if (!col) return;
+
+            // Aplicar ancho guardado
+            const storedWidth = localStorage.getItem(`kanban-col-width-${status}`);
+            if (storedWidth) {
+                col.style.width = storedWidth;
+            }
+
+            // Aplicar colapso guardado
+            if (status !== 'PROGRESS') {
+                const storedCollapsed = localStorage.getItem(`kanban-col-collapsed-${status}`);
+                if (storedCollapsed === 'true') {
+                    col.classList.add('collapsed');
+                } else if (storedCollapsed === 'false') {
+                    col.classList.remove('collapsed');
+                }
+            }
+        });
+    }
+
+    // Inicializar al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+        applyStoredColumnStates();
+    });
+
+    // Hidratar tras swaps de HTMX
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        lucide.createIcons();
+        applyStoredColumnStates();
+    });
 </script>
 {% endblock %}
+
 

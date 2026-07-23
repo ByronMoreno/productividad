@@ -53,11 +53,15 @@ def create_app():
     def inject_user_and_projects():
         from app.projects.models import Project
         from app.auth.utils import current_user
+        from app.auth.models import User
         user = current_user()
         p_list = []
+        u_list = []
         if user:
             p_list = Project.query.filter_by(user_id=user.id).order_by(Project.name).all()
-        return dict(projects=p_list, current_user=user)
+            u_list = User.query.order_by(User.email.asc()).all()
+        return dict(projects=p_list, current_user=user, all_users=u_list)
+
 
 
     return app

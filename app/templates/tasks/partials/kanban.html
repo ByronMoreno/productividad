@@ -1,4 +1,4 @@
-<div class="row g-3">
+<div class="row g-3 flex-nowrap overflow-auto pb-3" style="min-height: calc(100vh - 220px);">
     {% for status, display_name, icon in [
         ('PENDING', 'Pendientes', 'list-todo'),
         ('TODAY', 'Para Hoy', 'calendar-days'),
@@ -6,221 +6,269 @@
         ('WAITING', 'Esperando', 'hourglass'),
         ('DONE', 'Completado', 'check-circle')
     ] %}
-        <div class="col">
+        <div class="col-auto kanban-column position-relative" id="col-{{ status }}" style="width: 300px; min-width: 55px; transition: width 0.3s ease;">
+            <!-- Divisor de redimensionamiento (Resizer) -->
+            <div class="kanban-resizer" onmousedown="initResize(event, 'col-{{ status }}')"></div>
+            
             <div class="kanban-col h-100" ondragover="allowDrop(event)" ondrop="drop(event, '{{ status }}')">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Cabecera visible cuando está expandida -->
+                <div class="d-flex justify-content-between align-items-center mb-3 kanban-header">
+                    <div class="d-flex align-items-center text-truncate">
+                        {% if status != 'PROGRESS' %}
+                            <button type="button" class="btn btn-sm text-zen-muted p-0 border-0 me-2 d-flex align-items-center" onclick="toggleCollapseColumn('{{ status }}')" title="Contraer columna">
+                                <i data-lucide="chevron-left" class="collapse-icon-{{ status }}" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        {% endif %}
+                        <h3 class="h6 fw-bold mb-0 text-truncate kanban-title">
+                            <i data-lucide="{{ icon }}" class="me-2 text-zen-muted"></i>{{ display_name }}
+                        </h3>
+                    </div>
+                    <span class="badge bg-light text-muted border border-secondary rounded-pill kanban-count">{{ kanban[status]|length }}</span>
+                </div>
 
-                    <h3 class="h6 fw-bold mb-0 text-truncate">
-                        <i data-lucide="{{ icon }}" class="me-2 text-zen-muted"></i>{{ display_name }}
+                <!-- Cabecera / Título vertical cuando está colapsada -->
+                <div class="collapsed-title d-none flex-column align-items-center py-3" onclick="toggleCollapseColumn('{{ status }}')" style="cursor: pointer; height: 100%;">
+                    <button type="button" class="btn btn-sm text-zen-muted p-0 border-0 mb-3" title="Expandir columna">
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                    </button>
+                    <h3 class="h6 fw-bold mb-0 d-flex align-items-center" style="writing-mode: vertical-lr; transform: rotate(180deg); color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">
+                        <i data-lucide="{{ icon }}" class="mb-2 text-zen-muted" style="transform: rotate(90deg); width: 14px; height: 14px;"></i>{{ display_name }}
                     </h3>
-                    <span class="badge bg-light text-muted border border-secondary rounded-pill">{{ kanban[status]|length }}</span>
+                    <span class="badge bg-light text-muted border border-secondary rounded-pill mt-3">{{ kanban[status]|length }}</span>
                 </div>
                 
-                <div class="kanban-tasks-container">
-                    {% for task in kanban[status] %}
-                        {% set ns = namespace(active_session=None, accumulated_seconds=0) %}
-                        {% for s in task.focus_sessions %}
-                            {% if s.end_time is none %}
-                                {% set ns.active_session = s %}
+                <!-- Contenedor del contenido que se oculta al colapsar -->
+                <div class="kanban-content-wrapper">
+                    <div class="kanban-tasks-container">
+                        {% for task in kanban[status] %}
+                            {% set ns = namespace(active_session=None, accumulated_seconds=0) %}
+                            {% for s in task.focus_sessions %}
+                                {% if s.end_time is none %}
+                                    {% set ns.active_session = s %}
+                                {% else %}
+                                    {% set ns.accumulated_seconds = ns.accumulated_seconds + (s.end_time - s.start_time).total_seconds() | int %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% set border_color = 'var(--border)' %}
+                            {% if task.project %}
+                                {% set border_color = task.project.color_hex %}
                             {% else %}
-                                {% set ns.accumulated_seconds = ns.accumulated_seconds + (s.end_time - s.start_time).total_seconds() | int %}
+                                {% if task.priority == 'HIGH' %}
+                                    {% set border_color = '#ef4444' %}
+                                {% elif task.priority == 'MEDIUM' %}
+                                    {% set border_color = '#f59e0b' %}
+                                {% elif task.priority == 'LOW' %}
+                                    {% set border_color = '#3b82f6' %}
+                                {% endif %}
                             {% endif %}
-                        {% endfor %}
+                            <div class="kanban-task" draggable="true" ondragstart="drag(event)" id="task-{{ task.id }}" style="border-left: 3px solid {{ border_color }}; cursor: grab;">
 
-                        {% set border_color = 'var(--border)' %}
-                        {% if task.project %}
-                            {% set border_color = task.project.color_hex %}
-                        {% else %}
-                            {% if task.priority == 'HIGH' %}
-                                {% set border_color = '#ef4444' %}
-                            {% elif task.priority == 'MEDIUM' %}
-                                {% set border_color = '#f59e0b' %}
-                            {% elif task.priority == 'LOW' %}
-                                {% set border_color = '#3b82f6' %}
-                            {% endif %}
-                        {% endif %}
-                        <div class="kanban-task" draggable="true" ondragstart="drag(event)" id="task-{{ task.id }}" style="border-left: 3px solid {{ border_color }}; cursor: grab;">
-
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h4 class="h6 fw-bold mb-0" title="Editar tarea" 
-                                    style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#editTaskModal{{ task.id }}">
-                                    {{ task.title }}
-                                </h4>
-                                <button class="btn btn-sm text-danger p-0 border-0 bg-transparent" 
-                                        hx-delete="{{ url_for('tasks.delete', task_id=task.id) }}"
-                                        hx-target="#kanban-board"
-                                        hx-swap="innerHTML"
-                                        hx-confirm="¿Seguro que deseas eliminar esta tarea?">
-                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-                                </button>
-                            </div>
-                            
-                            {% if task.description %}
-                                <p class="text-zen-muted small mb-3 text-break" style="font-size: 0.85rem; white-space: pre-wrap; line-height: 1.4;">{{ task.description }}</p>
-                            {% endif %}
-                            
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-light text-muted border border-secondary" style="font-size: 0.7rem;">
-                                    <i data-lucide="clock" class="me-1"></i>{{ task.estimated_time }}m
-                                </span>
-                                <span class="energy-star small">
-                                    {% for i in range(task.energy) %}★{% endfor %}
-                                </span>
-                            </div>
-
-                            {% if task.due_date %}
-                                <div class="text-danger small mt-2" style="font-size: 0.7rem; font-weight: 600;">
-                                    <i data-lucide="calendar" class="me-1" style="width: 12px; height: 12px; vertical-align: middle;"></i>
-                                    Fecha de fin: {{ task.due_date.strftime('%d/%m/%Y') }}
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h4 class="h6 fw-bold mb-0 text-break" title="Editar tarea" 
+                                        style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editTaskModal{{ task.id }}">
+                                        {{ task.title }}
+                                    </h4>
+                                    <button class="btn btn-sm text-danger p-0 border-0 bg-transparent" 
+                                            hx-delete="{{ url_for('tasks.delete', task_id=task.id) }}"
+                                            hx-target="#kanban-board"
+                                            hx-swap="innerHTML"
+                                            hx-confirm="¿Seguro que deseas eliminar esta tarea?">
+                                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                    </button>
                                 </div>
-                            {% endif %}
-
-                            <div class="text-zen-muted small mb-2" style="font-size: 0.7rem; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 6px;">
-                                <i data-lucide="calendar-plus" class="me-1" style="width: 11px; height: 11px; vertical-align: middle;"></i>
-                                Creada: {{ task.created_at_local.strftime('%d/%m/%Y %H:%M') }}
-                            </div>
-
-                            {% if ns.active_session and task.started_at_local %}
-                                <div class="text-primary small mb-2" style="font-size: 0.7rem; font-weight: 500;">
-                                    <i data-lucide="play" class="me-1 text-primary" style="width: 11px; height: 11px; vertical-align: middle;"></i>
-                                    Iniciado a las: {{ task.started_at_local.strftime('%H:%M') }}
+                                
+                                {% if task.description %}
+                                    <p class="text-zen-muted small mb-3 text-break" style="font-size: 0.85rem; white-space: pre-wrap; line-height: 1.4;">{{ task.description }}</p>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-light text-muted border border-secondary" style="font-size: 0.7rem;">
+                                        <i data-lucide="clock" class="me-1"></i>{{ task.estimated_time }}m
+                                    </span>
+                                    <span class="energy-star small">
+                                        {% for i in range(task.energy) %}★{% endfor %}
+                                    </span>
                                 </div>
-                            {% endif %}
 
-                            {% if task.status == 'DONE' and task.completed_at_local %}
-                                <div class="text-success small mb-2" style="font-size: 0.7rem; font-weight: 500;">
-                                    <i data-lucide="check-circle" class="me-1 text-success" style="width: 11px; height: 11px; vertical-align: middle;"></i>
-                                    Finalizado a las: {{ task.completed_at_local.strftime('%H:%M') }}
+                                {% if task.due_date %}
+                                    <div class="text-danger small mt-2" style="font-size: 0.7rem; font-weight: 600;">
+                                        <i data-lucide="calendar" class="me-1" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                        Fecha de fin: {{ task.due_date.strftime('%d/%m/%Y') }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="text-zen-muted small mb-2" style="font-size: 0.7rem; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 6px;">
+                                    <i data-lucide="calendar-plus" class="me-1" style="width: 11px; height: 11px; vertical-align: middle;"></i>
+                                    Creada: {{ task.created_at_local.strftime('%d/%m/%Y %H:%M') }}
                                 </div>
-                            {% endif %}
 
+                                {% if ns.active_session and task.started_at_local %}
+                                    <div class="text-primary small mb-2" style="font-size: 0.7rem; font-weight: 500;">
+                                        <i data-lucide="play" class="me-1 text-primary" style="width: 11px; height: 11px; vertical-align: middle;"></i>
+                                        Iniciado a las: {{ task.started_at_local.strftime('%H:%M') }}
+                                    </div>
+                                {% endif %}
 
+                                {% if task.status == 'DONE' and task.completed_at_local %}
+                                    <div class="text-success small mb-2" style="font-size: 0.7rem; font-weight: 500;">
+                                        <i data-lucide="check-circle" class="me-1 text-success" style="width: 11px; height: 11px; vertical-align: middle;"></i>
+                                        Finalizado a las: {{ task.completed_at_local.strftime('%H:%M') }}
+                                    </div>
+                                {% endif %}
 
-                            <!-- Botones de Control de Temporizador en la Tarjeta -->
-                            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-light">
-                                <div class="text-zen-muted small" style="font-size: 0.7rem;">
-                                    {% if ns.accumulated_seconds > 0 %}
-                                        <i data-lucide="play-circle" class="text-primary me-1" style="width: 10px; height: 10px; vertical-align: middle;"></i>
-                                        {{ (ns.accumulated_seconds / 60) | int }}m {{ ns.accumulated_seconds % 60 }}s
-                                    {% else %}
-                                        Sin iniciar
-                                    {% endif %}
-                                </div>
-                                <div class="d-flex gap-1">
-                                    {% if ns.active_session %}
-                                        <button class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size: 0.65rem;"
-                                                hx-post="{{ url_for('analytics.pause_focus', session_id=ns.active_session.id, src='kanban') }}"
-                                                hx-target="#kanban-board"
-                                                hx-swap="innerHTML"
-                                                title="Detener temporizador">
-                                            <i data-lucide="pause" style="width: 10px; height: 10px;"></i>
-                                        </button>
-                                        <button class="btn btn-xs btn-brain-off py-1 px-2" style="font-size: 0.65rem;"
-                                                hx-post="{{ url_for('analytics.complete_task', task_id=task.id) }}"
-                                                hx-target="#kanban-board"
-                                                hx-swap="innerHTML"
-                                                title="Terminar tarea">
-                                            <i data-lucide="check" style="width: 10px; height: 10px;"></i>
-                                        </button>
-                                    {% else %}
-                                        {% if task.status != 'DONE' %}
-                                            <button class="btn btn-xs btn-zen py-1 px-2" style="font-size: 0.65rem;"
-                                                    hx-post="{{ url_for('analytics.start_focus', task_id=task.id, src='kanban') }}"
+                                <!-- Botones de Control de Temporizador en la Tarjeta -->
+                                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-light">
+                                    <div class="text-zen-muted small" style="font-size: 0.7rem;">
+                                        {% if ns.accumulated_seconds > 0 %}
+                                            <i data-lucide="play-circle" class="text-primary me-1" style="width: 10px; height: 10px; vertical-align: middle;"></i>
+                                            {{ (ns.accumulated_seconds / 60) | int }}m {{ ns.accumulated_seconds % 60 }}s
+                                        {% else %}
+                                            Sin iniciar
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex gap-1">
+                                        {% if ns.active_session %}
+                                            <button class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size: 0.65rem;"
+                                                    hx-post="{{ url_for('analytics.pause_focus', session_id=ns.active_session.id, src='kanban') }}"
                                                     hx-target="#kanban-board"
                                                     hx-swap="innerHTML"
-                                                    title="Iniciar temporizador">
-                                                <i data-lucide="play" style="width: 10px; height: 10px;"></i>
-                                                {% if ns.accumulated_seconds > 0 %}Reanudar{% else %}Iniciar{% endif %}
+                                                    title="Detener temporizador">
+                                                <i data-lucide="pause" style="width: 10px; height: 10px;"></i>
                                             </button>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Enlaces de Segundo Cerebro en la Tarjeta -->
-                            {% if task.knowledge_nodes.count() > 0 %}
-                                <div class="mt-2 text-start">
-                                    <a href="{{ url_for('knowledge.index') }}" class="text-decoration-none" style="font-size: 0.7rem; color: var(--primary); font-weight: 500;" title="Ver notas del Segundo Cerebro">
-                                        <i data-lucide="book-open" class="me-1"></i>{{ task.knowledge_nodes.count() }} nota(s)
-                                    </a>
-                                </div>
-                            {% endif %}
-
-                            <div class="dropdown mt-3">
-                                <button class="btn btn-sm btn-light w-100 py-1 text-zen-muted border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem;">
-                                    Mover a...
-                                </button>
-                                <ul class="dropdown-menu" style="font-size: 0.75rem;">
-                                    {% for target_status, target_name in [
-                                        ('PENDING', 'Pendientes'),
-                                        ('TODAY', 'Para Hoy'),
-                                        ('PROGRESS', 'En Proceso'),
-                                        ('WAITING', 'Esperando'),
-                                        ('DONE', 'Completado')
-                                    ] %}
-                                        {% if target_status != status %}
-                                            <li>
-                                                <button class="dropdown-item" 
-                                                        hx-post="{{ url_for('tasks.update_status', task_id=task.id, status=target_status) }}"
+                                            <button class="btn btn-xs btn-brain-off py-1 px-2" style="font-size: 0.65rem;"
+                                                    hx-post="{{ url_for('analytics.complete_task', task_id=task.id) }}"
+                                                    hx-target="#kanban-board"
+                                                    hx-swap="innerHTML"
+                                                    title="Terminar tarea">
+                                                <i data-lucide="check" style="width: 10px; height: 10px;"></i>
+                                            </button>
+                                        {% else %}
+                                            {% if task.status != 'DONE' %}
+                                                <button class="btn btn-xs btn-zen py-1 px-2" style="font-size: 0.65rem;"
+                                                        hx-post="{{ url_for('analytics.start_focus', task_id=task.id, src='kanban') }}"
                                                         hx-target="#kanban-board"
-                                                        hx-swap="innerHTML">
-                                                    {{ target_name }}
+                                                        hx-swap="innerHTML"
+                                                        title="Iniciar temporizador">
+                                                    <i data-lucide="play" style="width: 10px; height: 10px;"></i>
+                                                    {% if ns.accumulated_seconds > 0 %}Reanudar{% else %}Iniciar{% endif %}
                                                 </button>
-                                            </li>
+                                            {% endif %}
                                         {% endif %}
-                                    {% endfor %}
-                                </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Enlaces de Segundo Cerebro en la Tarjeta -->
+                                {% if task.knowledge_nodes.count() > 0 %}
+                                    <div class="mt-2 text-start">
+                                        <a href="{{ url_for('knowledge.index') }}" class="text-decoration-none" style="font-size: 0.7rem; color: var(--primary); font-weight: 500;" title="Ver notas del Segundo Cerebro">
+                                            <i data-lucide="book-open" class="me-1"></i>{{ task.knowledge_nodes.count() }} nota(s)
+                                        </a>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Mover a... y Delegación -->
+                                <div class="d-flex gap-1 mt-3">
+                                    <div class="dropdown flex-grow-1">
+                                        <button class="btn btn-sm btn-light w-100 py-1 text-zen-muted border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem;">
+                                            Mover a...
+                                        </button>
+                                        <ul class="dropdown-menu" style="font-size: 0.75rem;">
+                                            {% for target_status, target_name in [
+                                                ('PENDING', 'Pendientes'),
+                                                ('TODAY', 'Para Hoy'),
+                                                ('PROGRESS', 'En Proceso'),
+                                                ('WAITING', 'Esperando'),
+                                                ('DONE', 'Completado')
+                                            ] %}
+                                                {% if target_status != status %}
+                                                    <li>
+                                                        <button class="dropdown-item" 
+                                                                hx-post="{{ url_for('tasks.update_status', task_id=task.id, status=target_status) }}"
+                                                                hx-target="#kanban-board"
+                                                                hx-swap="innerHTML">
+                                                            {{ target_name }}
+                                                        </button>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary w-100 py-1 text-zen-muted border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem;" title="Delegar / Transferir tarea">
+                                            <i data-lucide="share-2" style="width: 11px; height: 11px; vertical-align: middle;"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end p-2" style="font-size: 0.75rem; min-width: 180px;">
+                                            <li class="dropdown-header small text-muted px-2">Delegar tarea a:</li>
+                                            {% for u in all_users %}
+                                                {% if u.id != current_user.id %}
+                                                    <li>
+                                                        <button class="dropdown-item small text-truncate" 
+                                                                hx-post="{{ url_for('tasks.delegate', task_id=task.id) }}"
+                                                                hx-vals='{"user_id": "{{ u.id }}"}'
+                                                                hx-target="#kanban-board"
+                                                                hx-swap="innerHTML">
+                                                            {{ u.email }}
+                                                        </button>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if all_users | length <= 1 %}
+                                                <li class="small text-muted px-2">No hay otros usuarios</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Modal de Detalle y Edición por Tarea (Notion style) -->
-                        <div class="modal fade" id="editTaskModal{{ task.id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <form hx-post="{{ url_for('tasks.edit', task_id=task.id) }}" 
-                                          hx-target="#kanban-board" 
-                                          hx-swap="innerHTML"
-                                          hx-on::after-request="bootstrap.Modal.getInstance(document.getElementById('editTaskModal{{ task.id }}')).hide();">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title fw-bold"><i data-lucide="edit" class="text-primary me-2"></i>Detalle / Editar Tarea</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body text-start">
-                                            <div class="text-muted small mb-3">
-                                                <i data-lucide="info" class="me-1" style="width: 12px; height: 12px; vertical-align: middle;"></i>
-                                                Registrada el {{ task.created_at_local.strftime('%d/%m/%Y a las %H:%M') }}
+                            <!-- Modal de Detalle y Edición por Tarea (Notion style) -->
+                            <div class="modal fade" id="editTaskModal{{ task.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <form hx-post="{{ url_for('tasks.edit', task_id=task.id) }}" 
+                                              hx-target="#kanban-board" 
+                                              hx-swap="innerHTML"
+                                              hx-on::after-request="bootstrap.Modal.getInstance(document.getElementById('editTaskModal{{ task.id }}')).hide();">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold"><i data-lucide="edit" class="text-primary me-2"></i>Detalle / Editar Tarea</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Título de la Tarea</label>
-                                                <input type="text" class="form-control" name="title" value="{{ task.title }}" required>
-                                            </div>
-
-                                            
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Descripción Completa</label>
-                                                <textarea class="form-control" name="description" rows="5" placeholder="Documenta o explica los detalles de la actividad aquí...">{{ task.description or '' }}</textarea>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Proyecto / Área</label>
-                                                    <select class="form-select" name="project_id">
-                                                        <option value="">Ninguno (General)</option>
-                                                        {% for p in projects %}
-                                                            <option value="{{ p.id }}" {% if task.project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
-                                                        {% endfor %}
-                                                    </select>
+                                            <div class="modal-body text-start">
+                                                <div class="text-muted small mb-3">
+                                                    <i data-lucide="info" class="me-1" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                                    Registrada el {{ task.created_at_local.strftime('%d/%m/%Y a las %H:%M') }}
                                                 </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Estado</label>
-                                                    <select class="form-select" name="status">
-                                                        <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Pendiente</option>
-                                                        <option value="TODAY" {% if task.status == 'TODAY' %}selected{% endif %}>Para Hoy</option>
-                                                        <option value="PROGRESS" {% if task.status == 'PROGRESS' %}selected{% endif %}>En Proceso</option>
-                                                        <option value="WAITING" {% if task.status == 'WAITING' %}selected{% endif %}>Esperando</option>
-                                                        <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Completado</option>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Título de la Tarea</label>
+                                                    <input type="text" class="form-control" name="title" value="{{ task.title }}" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Descripción Completa</label>
+                                                    <textarea class="form-control" name="description" rows="5" placeholder="Documenta o explica los detalles de la actividad aquí...">{{ task.description or '' }}</textarea>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">Proyecto / Área</label>
+                                                        <select class="form-select" name="project_id">
+                                                            <option value="">Ninguno (General)</option>
+                                                            {% for p in projects %}
+                                                                <option value="{{ p.id }}" {% if task.project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">Estado</label>
+                                                        <select class="form-select" name="status">
+                                                            <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Pendiente</option>
+                                                            <option value="TODAY" {% if task.status == 'TODAY' %}selected{% endif %}>Para Hoy</option>
+                                                            <option value="PROGRESS" {% if task.status == 'PROGRESS' %}selected{% endif %}>En Proceso</option>
+                                                            <option value="WAITING" {% if task.status == 'WAITING' %}selected{% endif %}>Esperando</option>
+                                                            <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Completado</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -302,5 +350,6 @@
                 </div>
             </div>
         </div>
-    {% endfor %}
+    </div>
+{% endfor %}
 </div>

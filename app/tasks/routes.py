@@ -152,3 +152,29 @@ def add_note(task_id):
     if request.headers.get('HX-Request'):
         return render_template('tasks/partials/notes_list.html', task=task)
     return redirect(url_for('tasks.index'))
+
+@tasks_bp.route('/delegate/<int:task_id>', methods=['POST'])
+@login_required
+def delegate(task_id):
+    u_id = session['user_id']
+    task = db.get_or_404(Task, task_id)
+    
+    # Validar propiedad de la tarea
+    if task.user_id == u_id:
+        target_user_id = request.form.get('user_id', type=int)
+        if target_user_id:
+            task.user_id = target_user_id
+            
+            # Si estaba en progreso, detener el cronómetro
+            if task.status == 'PROGRESS':
+                task.status = 'TODAY'
+                from app.analytics.models import FocusSession
+                active_sessions = FocusSession.query.filter_by(task_id=task.id, end_time=None).all()
+                for s in active_sessions:
+                    s.end_time = datetime.utcnow()
+            
+            db.session.commit()
+            
+    kanban = get_kanban_dict(u_id)
+    return render_template('tasks/partials/kanban.html', kanban=kanban)
+

@@ -276,3 +276,56 @@ h1, h2, h3, h4, h5, h6 {
 svg.lucide {
     stroke-width: 1.75;
 }
+
+/* Resizing y Colapso de Columnas */
+.kanban-column {
+    position: relative;
+    user-select: auto;
+}
+
+.kanban-resizer {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 100;
+    transition: background-color 0.2s;
+    background-color: transparent;
+}
+
+.kanban-resizer:hover {
+    background-color: var(--primary);
+}
+
+.kanban-column.collapsed {
+    width: 55px !important;
+    min-width: 55px !important;
+    overflow: hidden;
+}
+
+.kanban-column.collapsed .kanban-header {
+    display: none !important;
+}
+
+.kanban-column.collapsed .collapsed-title {
+    display: flex !important;
+}
+
+.kanban-column.collapsed .kanban-content-wrapper {
+    display: none !important;
+}
+
+.kanban-column.collapsed .kanban-resizer {
+    display: none !important;
+}
+
+.kanban-column .kanban-col {
+    transition: padding 0.3s ease;
+}
+
+.kanban-column.collapsed .kanban-col {
+    padding: 10px 0 !important;
+}
+
