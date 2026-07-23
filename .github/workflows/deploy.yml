@@ -41,24 +41,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Create .env file
-        run: |
-          echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" > .env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-          echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
-          echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env
+      - name: Pre-create deploy directory on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          script: |
+            mkdir -p /home/${{ secrets.VPS_USER }}/productividad
 
-      - name: Copy stack.yml and .env to VPS
+      - name: Copy stack.yml and Makefile to VPS
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
-          source: "stack.yml,.env"
+          source: "stack.yml,Makefile"
           target: "/home/${{ secrets.VPS_USER }}/productividad"
 
       - name: Execute Swarm Deployment on VPS
@@ -72,6 +72,15 @@ jobs:
             echo "🚀 Iniciando despliegue"
             cd /home/${{ secrets.VPS_USER }}/productividad
             
+            # Escribir archivo .env directamente en el VPS de forma segura
+            echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" > .env
+            echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+            echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
+            echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env
+            
             echo "${{ secrets.GHCR_PATH }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "📦 Descargando imagen"
@@ -81,7 +90,7 @@ jobs:
             [ -f .env ] && . .env
             set +a
             
-            echo "🔄 Actualizando stack"
+            echo "🔄 Actualizando stack en Docker Swarm"
             docker stack deploy -c stack.yml productividad
             
             echo "✅ Despliegue completado"
