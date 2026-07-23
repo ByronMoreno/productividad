@@ -2,13 +2,31 @@
 
 {% block content %}
 <div class="row g-4">
-    <!-- Configuración del Sistema -->
+    <!-- Pestañas de Navegación del Admin -->
+    <div class="col-12 mb-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h1 class="h3 fw-bold mb-1"><i data-lucide="settings" class="me-2 text-primary"></i>Panel de Administración</h1>
+                <p class="text-zen-muted small mb-0">Control global de seguridad, usuarios y agrupaciones de trabajo.</p>
+            </div>
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('admin.index') }}" class="btn btn-primary px-4 py-2 small active">
+                    <i data-lucide="users" class="me-1"></i>Usuarios
+                </a>
+                <a href="{{ url_for('admin.groups') }}" class="btn btn-outline-primary px-4 py-2 small">
+                    <i data-lucide="users-round" class="me-1"></i>Gestionar Grupos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuración del Sistema (Izquierda) -->
     <div class="col-lg-4">
         <div class="zen-card">
-            <h2 class="h4 mb-3"><i data-lucide="shield-check" class="me-2 text-primary"></i>Configuración</h2>
-            <p class="text-zen-muted small">Controla el modo en que los nuevos usuarios pueden ingresar al sistema.</p>
+            <h2 class="h5 fw-bold mb-3"><i data-lucide="shield-check" class="me-2 text-primary"></i>Configuración</h2>
+            <p class="text-zen-muted small mb-4">Controla el modo en que los nuevos usuarios pueden ingresar al sistema.</p>
             
-            <form action="{{ url_for('admin.toggle_registration') }}" method="POST" class="mt-4">
+            <form action="{{ url_for('admin.toggle_registration') }}" method="POST">
                 <div class="mb-4">
                     <label class="form-label fw-bold mb-2">Modo de Registro de Usuarios</label>
                     <div class="form-check mb-2">
@@ -27,18 +45,18 @@
                     </div>
                 </div>
 
-                <button class="btn btn-zen w-100" type="submit">Guardar Configuración</button>
+                <button class="btn btn-zen w-100 py-2" type="submit">Guardar Configuración</button>
             </form>
         </div>
     </div>
 
-    <!-- Listado de Usuarios -->
+    <!-- Listado de Usuarios (Derecha) -->
     <div class="col-lg-8">
         <div class="zen-card">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <div>
-                    <h2 class="h4 mb-1 fw-bold"><i data-lucide="users" class="me-2 text-success"></i>Usuarios del Sistema</h2>
-                    <p class="text-zen-muted small mb-0">Gestión de cuentas y asignación de roles.</p>
+                    <h2 class="h5 fw-bold mb-1"><i data-lucide="users-2" class="me-2 text-success"></i>Usuarios del Sistema</h2>
+                    <p class="text-zen-muted small mb-0">Gestión de cuentas, roles y agrupaciones.</p>
                 </div>
                 <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-zen py-2 px-3">
                     <i data-lucide="user-plus" class="me-1"></i>Crear Usuario
@@ -49,7 +67,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible show small py-2 px-3 mb-3" role="alert">
+                        <div class="alert alert-{{ category }} alert-dismissible show small py-2 px-3 mb-3 shadow-sm" role="alert">
                             {{ message }}
                         </div>
                     {% endfor %}
@@ -62,6 +80,7 @@
                         <tr style="border-bottom: 2px solid var(--border);">
                             <th>Usuario / Correo</th>
                             <th>Rol</th>
+                            <th>Grupos</th>
                             <th>Creado El</th>
                             <th class="text-end">Acciones</th>
                         </tr>
@@ -82,8 +101,24 @@
                                         <span class="badge bg-light text-secondary border border-secondary-subtle">Usuario Normal</span>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    {% if u.groups.count() > 0 %}
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% for g in u.groups %}
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle small py-1 px-2" style="font-size: 0.75rem;">
+                                                    {{ g.name }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small">Ninguno</span>
+                                    {% endif %}
+                                </td>
                                 <td class="small text-muted">{{ u.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td class="text-end">
+                                    <a href="{{ url_for('admin.edit_user', user_id=u.id) }}" class="btn btn-sm btn-outline-primary p-1 me-1" title="Editar usuario/grupos">
+                                        <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                                    </a>
                                     {% if u.id != current_user.id %}
                                         <form action="{{ url_for('admin.delete_user', user_id=u.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar el usuario {{ u.email }}? Esta acción borrará todas sus tareas y datos asociados.');">
                                             <button type="submit" class="btn btn-sm btn-outline-danger p-1" title="Eliminar usuario">
@@ -91,7 +126,7 @@
                                             </button>
                                         </form>
                                     {% else %}
-                                        <span class="text-muted small">-</span>
+                                        <span class="text-muted small" style="display: inline-block; width: 24px; text-align: center;">-</span>
                                     {% endif %}
                                 </td>
                             </tr>

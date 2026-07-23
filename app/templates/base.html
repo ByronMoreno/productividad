@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antigravity OS</title>
+    <title>TaskFlow OS</title>
+
     <!-- Script de bloqueo rápido para tema persistente (sin parpadeo) -->
     <script>
         (function() {
@@ -28,8 +29,9 @@
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('core.index') }}">
-                <i data-lucide="feather" class="me-2 text-primary"></i>Antigravity OS
+                <i data-lucide="feather" class="me-2 text-primary"></i>TaskFlow OS
             </a>
+
             {% if current_user %}
             <div class="d-flex align-items-center order-lg-last">
                 <!-- Theme Toggle Button -->

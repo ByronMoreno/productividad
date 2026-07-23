@@ -83,7 +83,8 @@ class AIService:
         client = OpenAI(api_key=api_key)
         
         system_prompt = (
-            "Eres el motor de inteligencia artificial de Antigravity OS, un sistema zen de productividad.\n"
+            "Eres el motor de inteligencia artificial de TaskFlow OS, un sistema zen de productividad.\n"
+
             "Tu tarea es analizar el pensamiento o idea que el usuario ha capturado en su bandeja de entrada (Inbox) "
             "y clasificarlo estructurando una tarea en formato JSON.\n\n"
             "Debes responder ÚNICAMENTE con un objeto JSON que siga exactamente este esquema:\n"
@@ -167,8 +168,9 @@ class AIService:
         knowledge_str = "\n".join(knowledge_summary) if knowledge_summary else "No hay notas registradas."
 
         system_prompt = (
-            "Eres el IA Coach de Antigravity OS. Tu objetivo es ayudar al usuario a gestionar su energía mental, "
+            "Eres el IA Coach de TaskFlow OS. Tu objetivo es ayudar al usuario a gestionar su energía mental, "
             "reducir el estrés, y avanzar en sus tareas de forma estructurada y con mínima fatiga visual y mental.\n"
+
             "Sé empático, calmado y muy conciso. No respondas con largas listas de consejos. Recomienda una acción clara.\n\n"
             "CONTEXTO ACTUAL DEL USUARIO:\n"
             f"- Límite de energía para hoy: {energy_desc}\n"
@@ -270,7 +272,8 @@ class AIService:
         tasks_str = "\n".join(tasks_summary) if tasks_summary else "No hay tareas pendientes."
 
         system_prompt = (
-            "Eres el moderador de un debate multi-agente en Antigravity OS.\n"
+            "Eres el moderador de un debate multi-agente en TaskFlow OS.\n"
+
             "Debes simular un diálogo de consenso en español entre 4 agentes especializados:\n"
             "1) Agente Docencia (🎓): Defiende temas de clases, alumnos y tesis.\n"
             "2) Agente DevOps/Código (💻): Defiende programación, servidores e infraestructuras.\n"
@@ -433,7 +436,8 @@ class AIService:
         tasks_str = "\n".join(tasks_summary) if tasks_summary else "No hay tareas pendientes."
         
         system_prompt = (
-            "Eres el planificador de tiempo zen de Antigravity OS.\n"
+            "Eres el planificador de tiempo zen de TaskFlow OS.\n"
+
             "Tu objetivo es crear el itinerario de Time Blocking para el día de hoy.\n"
             "Debes organizar las tareas del usuario en bloques lógicos, empezando a las 09:00 AM.\n"
             "Instrucciones:\n"

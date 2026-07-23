@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Pestañas de Navegación del Admin -->
+    <div class="col-12 mb-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h1 class="h3 fw-bold mb-1"><i data-lucide="settings" class="me-2 text-primary"></i>Panel de Administración</h1>
+                <p class="text-zen-muted small mb-0">Control global de seguridad, usuarios y agrupaciones de trabajo.</p>
+            </div>
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('admin.index') }}" class="btn btn-outline-primary px-4 py-2 small">
+                    <i data-lucide="users" class="me-1"></i>Usuarios
+                </a>
+                <a href="{{ url_for('admin.groups') }}" class="btn btn-primary px-4 py-2 small active">
+                    <i data-lucide="users-round" class="me-1"></i>Gestionar Grupos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crear Grupo (Izquierda) -->
+    <div class="col-lg-4">
+        <div class="zen-card">
+            <h2 class="h5 fw-bold mb-3"><i data-lucide="folder-plus" class="me-2 text-primary"></i>Nuevo Grupo</h2>
+            <p class="text-zen-muted small mb-4">Crea una nueva agrupación (ej: Vinculación, Prácticas) para organizar a tus colaboradores.</p>
+            
+            <form action="{{ url_for('admin.groups') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre del Grupo</label>
+                    <input type="text" name="name" class="form-control" placeholder="Ej: Vinculación" required autofocus>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Descripción</label>
+                    <textarea name="description" class="form-control" rows="3" placeholder="Opcional. Describe la función de este grupo..."></textarea>
+                </div>
+
+                <button class="btn btn-zen w-100 py-2" type="submit">Crear Grupo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listado de Grupos (Derecha) -->
+    <div class="col-lg-8">
+        <div class="zen-card">
+            <h2 class="h5 fw-bold mb-1"><i data-lucide="layers" class="me-2 text-success"></i>Grupos Registrados</h2>
+            <p class="text-zen-muted small mb-4">Visualización y control de agrupaciones existentes.</p>
+
+            <!-- Flask Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible show small py-2 px-3 mb-3 shadow-sm" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="table-responsive">
+                <table class="table align-middle" style="color: var(--text) !important;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th>Grupo</th>
+                            <th>Descripción</th>
+                            <th class="text-center">Miembros</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if groups %}
+                            {% for g in groups %}
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td class="fw-bold">
+                                        <i data-lucide="tag" class="text-muted me-2" style="width: 14px; height: 14px; vertical-align: middle;"></i>{{ g.name }}
+                                    </td>
+                                    <td class="small text-muted">{{ g.description or 'Sin descripción' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-primary border border-primary-subtle">
+                                            {{ g.users.count() }} usuarios
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <form action="{{ url_for('admin.delete_group', group_id=g.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar el grupo {{ g.name }}? Esto desvinculará a todos sus miembros actuales.');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger p-1" title="Eliminar grupo">
+                                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-zen-muted small">No hay grupos creados todavía.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
