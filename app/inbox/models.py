@@ -9,6 +9,8 @@ class InboxItem(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     processed_at = db.Column(db.DateTime, nullable=True)
     is_processed = db.Column(db.Boolean, default=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+
 
     def to_dict(self):
         return {

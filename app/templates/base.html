@@ -30,6 +30,7 @@
             <a class="navbar-brand fw-bold" href="{{ url_for('core.index') }}">
                 <i data-lucide="feather" class="me-2 text-primary"></i>Antigravity OS
             </a>
+            {% if current_user %}
             <div class="d-flex align-items-center order-lg-last">
                 <!-- Theme Toggle Button -->
                 <button class="theme-toggle-btn me-2" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
@@ -72,8 +73,29 @@
                             <i data-lucide="folder" class="me-1"></i>Proyectos
                         </a>
                     </li>
+                    {% if current_user.role == 'ADMIN' %}
+                    <li class="nav-item">
+                        <a class="nav-link text-primary fw-bold" href="{{ url_for('admin.index') }}">
+                            <i data-lucide="settings" class="me-1"></i>Panel Admin
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-sm btn-outline-danger py-1 px-3 mt-1 mt-lg-0" href="{{ url_for('auth.logout') }}">
+                            <i data-lucide="log-out" class="me-1" style="width: 13px; height: 13px; vertical-align: middle;"></i>Salir
+                        </a>
+                    </li>
                 </ul>
             </div>
+            {% else %}
+            <div class="d-flex align-items-center order-lg-last">
+                <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+                    <i data-lucide="sun" id="theme-icon-light" style="display: none;"></i>
+                    <i data-lucide="moon" id="theme-icon-dark"></i>
+                </button>
+            </div>
+            {% endif %}
+
         </div>
     </nav>
 

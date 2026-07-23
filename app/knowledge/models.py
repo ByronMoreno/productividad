@@ -14,8 +14,10 @@ class KnowledgeNode(db.Model):
     content = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
 
     tasks = db.relationship('Task', secondary=task_knowledge_association, backref=db.backref('knowledge_nodes', lazy='dynamic'))
+
 
     def to_dict(self):
         return {

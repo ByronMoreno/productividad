@@ -1,30 +1,37 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from app.core.database import db
 from app.tasks.models import Task
 from app.projects.models import Project
 from datetime import datetime
+from app.auth.utils import login_required
 
 tasks_bp = Blueprint('tasks', __name__)
 
-@tasks_bp.route('/', methods=['GET'])
-def index():
-    tasks = Task.query.all()
-    projects = Project.query.order_by(Project.name).all()
-    
-    kanban = {
+def get_kanban_dict(u_id):
+    tasks = Task.query.filter_by(user_id=u_id).all()
+    return {
         'PENDING': [t for t in tasks if t.status == 'PENDING'],
         'TODAY': [t for t in tasks if t.status == 'TODAY'],
         'PROGRESS': [t for t in tasks if t.status == 'PROGRESS'],
         'WAITING': [t for t in tasks if t.status == 'WAITING'],
         'DONE': [t for t in tasks if t.status == 'DONE']
     }
+
+@tasks_bp.route('/', methods=['GET'])
+@login_required
+def index():
+    u_id = session['user_id']
+    kanban = get_kanban_dict(u_id)
+    projects = Project.query.filter_by(user_id=u_id).order_by(Project.name).all()
     
     if request.headers.get('HX-Request'):
         return render_template('tasks/partials/kanban.html', kanban=kanban)
     return render_template('tasks/index.html', kanban=kanban, projects=projects)
 
 @tasks_bp.route('/add', methods=['POST'])
+@login_required
 def add():
+    u_id = session['user_id']
     title = request.form.get('title')
     description = request.form.get('description')
     project_id = request.form.get('project_id')
@@ -51,7 +58,8 @@ def add():
             energy=energy,
             priority=priority,
             estimated_time=estimated_time,
-            due_date=due_date
+            due_date=due_date,
+            user_id=u_id
         )
         db.session.add(task)
         db.session.commit()
@@ -59,44 +67,41 @@ def add():
     return redirect(url_for('tasks.index'))
 
 @tasks_bp.route('/update-status/<int:task_id>', methods=['POST'])
+@login_required
 def update_status(task_id):
+    u_id = session['user_id']
     new_status = request.args.get('status')
     if new_status in ['PENDING', 'TODAY', 'PROGRESS', 'WAITING', 'DONE']:
         task = db.get_or_404(Task, task_id)
-        task.status = new_status
-        db.session.commit()
+        if task.user_id == u_id:
+            task.status = new_status
+            db.session.commit()
         
-    tasks = Task.query.all()
-    kanban = {
-        'PENDING': [t for t in tasks if t.status == 'PENDING'],
-        'TODAY': [t for t in tasks if t.status == 'TODAY'],
-        'PROGRESS': [t for t in tasks if t.status == 'PROGRESS'],
-        'WAITING': [t for t in tasks if t.status == 'WAITING'],
-        'DONE': [t for t in tasks if t.status == 'DONE']
-    }
+    kanban = get_kanban_dict(u_id)
     return render_template('tasks/partials/kanban.html', kanban=kanban)
 
 @tasks_bp.route('/delete/<int:task_id>', methods=['POST', 'DELETE'])
+@login_required
 def delete(task_id):
+    u_id = session['user_id']
     task = db.get_or_404(Task, task_id)
-    db.session.delete(task)
-    db.session.commit()
+    if task.user_id == u_id:
+        db.session.delete(task)
+        db.session.commit()
     
-    tasks = Task.query.all()
-    kanban = {
-        'PENDING': [t for t in tasks if t.status == 'PENDING'],
-        'TODAY': [t for t in tasks if t.status == 'TODAY'],
-        'PROGRESS': [t for t in tasks if t.status == 'PROGRESS'],
-        'WAITING': [t for t in tasks if t.status == 'WAITING'],
-        'DONE': [t for t in tasks if t.status == 'DONE']
-    }
+    kanban = get_kanban_dict(u_id)
     if request.headers.get('HX-Request'):
         return render_template('tasks/partials/kanban.html', kanban=kanban)
     return redirect(url_for('tasks.index'))
 
 @tasks_bp.route('/edit/<int:task_id>', methods=['POST'])
+@login_required
 def edit(task_id):
+    u_id = session['user_id']
     task = db.get_or_404(Task, task_id)
+    if task.user_id != u_id:
+        return redirect(url_for('tasks.index'))
+
     title = request.form.get('title')
     description = request.form.get('description')
     project_id = request.form.get('project_id')
@@ -124,24 +129,18 @@ def edit(task_id):
         task.due_date = due_date
         db.session.commit()
 
-    tasks = Task.query.all()
-    kanban = {
-        'PENDING': [t for t in tasks if t.status == 'PENDING'],
-        'TODAY': [t for t in tasks if t.status == 'TODAY'],
-        'PROGRESS': [t for t in tasks if t.status == 'PROGRESS'],
-        'WAITING': [t for t in tasks if t.status == 'WAITING'],
-        'DONE': [t for t in tasks if t.status == 'DONE']
-    }
-    
+    kanban = get_kanban_dict(u_id)
     if request.headers.get('HX-Request'):
         return render_template('tasks/partials/kanban.html', kanban=kanban)
     return redirect(url_for('tasks.index'))
 
 @tasks_bp.route('/<int:task_id>/notes/add', methods=['POST'])
+@login_required
 def add_note(task_id):
+    u_id = session['user_id']
     content = request.form.get('content')
     task = db.get_or_404(Task, task_id)
-    if content and content.strip():
+    if task.user_id == u_id and content and content.strip():
         from app.tasks.models import TaskNote
         note = TaskNote(
             content=content.strip(),
@@ -153,5 +152,3 @@ def add_note(task_id):
     if request.headers.get('HX-Request'):
         return render_template('tasks/partials/notes_list.html', task=task)
     return redirect(url_for('tasks.index'))
-
-

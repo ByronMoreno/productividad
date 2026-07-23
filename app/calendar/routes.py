@@ -1,13 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from app.core.database import db
 from app.calendar.models import TimeBlock
 from app.tasks.models import Task
 from datetime import datetime, date
+from app.auth.utils import login_required
 
 calendar_bp = Blueprint('calendar', __name__)
 
 @calendar_bp.route('/', methods=['GET'])
+@login_required
 def index():
+    u_id = session['user_id']
     selected_date_str = request.args.get('date')
     if selected_date_str:
         try:
@@ -17,15 +20,17 @@ def index():
     else:
         selected_date = date.today()
 
-    blocks = TimeBlock.query.filter_by(date=selected_date).order_by(TimeBlock.start_time).all()
-    tasks = Task.query.filter(Task.status != 'DONE').all()
+    blocks = TimeBlock.query.filter_by(date=selected_date, user_id=u_id).order_by(TimeBlock.start_time).all()
+    tasks = Task.query.filter(Task.status != 'DONE', Task.user_id == u_id).all()
 
     if request.headers.get('HX-Request'):
         return render_template('calendar/partials/list.html', blocks=blocks, selected_date=selected_date)
     return render_template('calendar/index.html', blocks=blocks, tasks=tasks, selected_date=selected_date)
 
 @calendar_bp.route('/add', methods=['POST'])
+@login_required
 def add():
+    u_id = session['user_id']
     title = request.form.get('title')
     start_time_str = request.form.get('start_time')
     end_time_str = request.form.get('end_time')
@@ -43,7 +48,8 @@ def add():
             start_time=start_time,
             end_time=end_time,
             date=selected_date,
-            task_id=task_id
+            task_id=task_id,
+            user_id=u_id
         )
         db.session.add(block)
         db.session.commit()
@@ -51,37 +57,41 @@ def add():
     return redirect(url_for('calendar.index', date=selected_date.isoformat()))
 
 @calendar_bp.route('/delete/<int:block_id>', methods=['POST', 'DELETE'])
+@login_required
 def delete(block_id):
+    u_id = session['user_id']
     block = db.get_or_404(TimeBlock, block_id)
     selected_date = block.date
-    db.session.delete(block)
-    db.session.commit()
+    if block.user_id == u_id:
+        db.session.delete(block)
+        db.session.commit()
 
-    blocks = TimeBlock.query.filter_by(date=selected_date).order_by(TimeBlock.start_time).all()
+    blocks = TimeBlock.query.filter_by(date=selected_date, user_id=u_id).order_by(TimeBlock.start_time).all()
     if request.headers.get('HX-Request'):
         return render_template('calendar/partials/list.html', blocks=blocks, selected_date=selected_date)
     return redirect(url_for('calendar.index', date=selected_date.isoformat()))
 
 @calendar_bp.route('/autogenerate', methods=['POST'])
+@login_required
 def autogenerate():
+    u_id = session['user_id']
     date_str = request.form.get('date')
     selected_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else date.today()
 
     from app.core.models import UserStatus
     from app.ai.services import AIService
     
-    status = UserStatus.get_status()
+    status = UserStatus.get_status(user_id=u_id)
     energy_limit = status.current_energy_limit if status else 3
 
-    
     # Obtener las tareas del día
-    tasks = Task.query.filter(Task.status.in_(['TODAY', 'PROGRESS'])).all()
+    tasks = Task.query.filter(Task.status.in_(['TODAY', 'PROGRESS']), Task.user_id == u_id).all()
     
     # Generar bloques con IA o Simulador
     ai_blocks = AIService.generate_time_blocking(energy_limit, tasks, selected_date)
     
     # Eliminar bloques anteriores para este día
-    TimeBlock.query.filter_by(date=selected_date).delete()
+    TimeBlock.query.filter_by(date=selected_date, user_id=u_id).delete()
     
     # Insertar los nuevos bloques autogenerados
     for ab in ai_blocks:
@@ -94,7 +104,7 @@ def autogenerate():
         task_id = ab.get('task_id')
         if task_id:
             db_task = db.session.get(Task, task_id)
-            if not db_task:
+            if not db_task or db_task.user_id != u_id:
                 task_id = None
                 
         block = TimeBlock(
@@ -102,13 +112,14 @@ def autogenerate():
             start_time=start_time,
             end_time=end_time,
             date=selected_date,
-            task_id=task_id
+            task_id=task_id,
+            user_id=u_id
         )
         db.session.add(block)
         
     db.session.commit()
     
-    blocks = TimeBlock.query.filter_by(date=selected_date).order_by(TimeBlock.start_time).all()
+    blocks = TimeBlock.query.filter_by(date=selected_date, user_id=u_id).order_by(TimeBlock.start_time).all()
     if request.headers.get('HX-Request'):
         src = request.args.get('src') or request.form.get('src')
         if src == 'dashboard':
@@ -117,13 +128,13 @@ def autogenerate():
     return redirect(url_for('calendar.index', date=selected_date.isoformat()))
 
 @calendar_bp.route('/events', methods=['GET'])
+@login_required
 def events():
-    from flask import jsonify
-    
+    u_id = session['user_id']
     events_list = []
     
     # 1. Bloques de tiempo del día
-    blocks = TimeBlock.query.all()
+    blocks = TimeBlock.query.filter_by(user_id=u_id).all()
     for block in blocks:
         start_datetime = datetime.combine(block.date, block.start_time)
         end_datetime = datetime.combine(block.date, block.end_time)
@@ -144,7 +155,7 @@ def events():
         })
         
     # 2. Deadlines de tareas del Kanban
-    tasks = Task.query.filter(Task.due_date.isnot(None)).all()
+    tasks = Task.query.filter(Task.due_date.isnot(None), Task.user_id == u_id).all()
     for task in tasks:
         color = "#ef4444" # Rojo para deadlines
         events_list.append({
@@ -156,6 +167,3 @@ def events():
         })
         
     return jsonify(events_list)
-
-
-

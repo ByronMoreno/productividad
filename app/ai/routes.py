@@ -1,20 +1,23 @@
-from flask import Blueprint, request, render_template
+from flask import Blueprint, request, render_template, session
 from app.core.database import db
 from app.core.models import UserStatus
 from app.tasks.models import Task
 from app.ai.services import AIService
 from app.ai.models import AgentCollaborationLog
+from app.auth.utils import login_required
 
 ai_bp = Blueprint('ai', __name__)
 
 @ai_bp.route('/coach', methods=['POST'])
+@login_required
 def coach():
+    u_id = session['user_id']
     user_message = request.form.get('message', '').strip()
     if not user_message:
         return ""
 
-    status = UserStatus.get_status()
-    pending_tasks = Task.query.filter(Task.status != 'DONE').all()
+    status = UserStatus.get_status(user_id=u_id)
+    pending_tasks = Task.query.filter(Task.status != 'DONE', Task.user_id == u_id).all()
 
     coach_reply = AIService.get_coach_response(
         user_message=user_message,
@@ -25,9 +28,11 @@ def coach():
     return render_template('ai/partials/chat_response.html', user_message=user_message, coach_reply=coach_reply)
 
 @ai_bp.route('/agents-debate', methods=['POST'])
+@login_required
 def agents_debate():
-    status = UserStatus.get_status()
-    pending_tasks = Task.query.filter(Task.status != 'DONE').all()
+    u_id = session['user_id']
+    status = UserStatus.get_status(user_id=u_id)
+    pending_tasks = Task.query.filter(Task.status != 'DONE', Task.user_id == u_id).all()
 
     # Simular debate
     transcript, recommendations = AIService.simulate_agent_debate(

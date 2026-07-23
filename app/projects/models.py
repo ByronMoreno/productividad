@@ -9,6 +9,8 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=True)
     color_hex = db.Column(db.String(7), default='#4a5568')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+
 
     # Nota: la relación se definirá en el modelo Task para evitar importaciones circulares, o podemos usar backref aquí.
     # Usaremos back_populates o backref. Definiremos la relación backref en Task para que la carga sea más limpia.

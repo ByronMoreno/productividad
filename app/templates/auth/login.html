@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="zen-card p-4 shadow-sm border border-secondary">
+            <div class="text-center mb-4">
+                <i data-lucide="feather" class="text-primary mb-2" style="width: 40px; height: 40px;"></i>
+                <h2 class="h4 fw-bold mb-1">Iniciar Sesión</h2>
+                <p class="text-zen-muted small">Ingresa tus credenciales para acceder a tu espacio zen.</p>
+            </div>
+
+            <!-- Flask Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show small py-2 px-3 mb-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.75rem 1rem;"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('auth.login') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Correo Electrónico</label>
+                    <input type="email" name="email" class="form-control" placeholder="nombre@ejemplo.com" required autofocus>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Contraseña</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-zen w-100 py-2 mt-3">Ingresar</button>
+            </form>
+
+            <div class="text-center mt-4 pt-3 border-top border-light">
+                <p class="text-zen-muted small mb-0">
+                    ¿No tienes una cuenta? 
+                    <a href="{{ url_for('auth.register') }}" class="text-primary fw-bold text-decoration-none">Regístrate</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

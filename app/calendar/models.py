@@ -12,6 +12,8 @@ class TimeBlock(db.Model):
 
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='SET NULL'), nullable=True)
     task = db.relationship('Task', backref=db.backref('time_blocks', lazy=True))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+
 
     def to_dict(self):
         return {

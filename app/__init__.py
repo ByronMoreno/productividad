@@ -35,6 +35,8 @@ def create_app():
     from app.ai.routes import ai_bp
     from app.knowledge.routes import knowledge_bp
     from app.analytics.routes import analytics_bp
+    from app.auth.routes import auth_bp
+    from app.admin.routes import admin_bp
 
     app.register_blueprint(core_bp)
     app.register_blueprint(inbox_bp, url_prefix='/inbox')
@@ -44,10 +46,18 @@ def create_app():
     app.register_blueprint(ai_bp, url_prefix='/ai')
     app.register_blueprint(knowledge_bp, url_prefix='/knowledge')
     app.register_blueprint(analytics_bp, url_prefix='/analytics')
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(admin_bp)
 
     @app.context_processor
-    def inject_projects():
+    def inject_user_and_projects():
         from app.projects.models import Project
-        return dict(projects=Project.query.order_by(Project.name).all())
+        from app.auth.utils import current_user
+        user = current_user()
+        p_list = []
+        if user:
+            p_list = Project.query.filter_by(user_id=user.id).order_by(Project.name).all()
+        return dict(projects=p_list, current_user=user)
+
 
     return app

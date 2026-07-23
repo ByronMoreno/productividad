@@ -7,11 +7,45 @@ app = create_app()
 
 if __name__ == '__main__':
     with app.app_context():
+        from app.auth.models import User, SystemConfig
         for i in range(10):
             try:
                 db.create_all()
+
                 print("Base de datos inicializada correctamente.")
+                
+                # Asegurar columnas user_id en caliente si no existen
+                from sqlalchemy import text
+                tables_to_migrate = ['tasks', 'projects', 'inbox_items', 'time_blocks', 'user_status', 'knowledge_nodes']
+                for table in tables_to_migrate:
+                    try:
+                        db.session.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"))
+                        db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        print(f"Nota: Columna user_id en {table} ya existe o requiere verificación. ({e})")
+
+                # Crear administrador inicial
+                from app.auth.models import User
+                admin = User.query.filter_by(email='bmoreno@uees.edu.ec').first()
+                if not admin:
+                    admin = User(email='bmoreno@uees.edu.ec', role='ADMIN')
+                    admin.set_password('12345')
+                    db.session.add(admin)
+                    db.session.commit()
+                    print("Usuario administrador bmoreno@uees.edu.ec creado con éxito.")
+                    
+                # Migración de datos existentes con user_id nulo al nuevo admin
+                for table in tables_to_migrate:
+                    db.session.execute(
+                        text(f"UPDATE {table} SET user_id = :u_id WHERE user_id IS NULL"),
+                        {"u_id": admin.id}
+                    )
+                db.session.commit()
+                print("Migración en caliente de datos históricos finalizada con éxito.")
                 break
+
+
             except OperationalError as e:
                 print(f"Base de datos no disponible, reintentando en 2 segundos... ({i+1}/10)")
                 time.sleep(2)

@@ -50,6 +50,8 @@ class Task(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=True)
     project = db.relationship('Project', backref=db.backref('tasks', lazy=True, cascade="all, delete-orphan"))
     notes = db.relationship('TaskNote', backref='task', lazy=True, cascade="all, delete-orphan", order_by="TaskNote.created_at.desc()")
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+
 
     def to_dict(self):
         return {
