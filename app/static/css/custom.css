@@ -281,10 +281,11 @@ svg.lucide {
 .kanban-column {
     position: relative;
     user-select: auto;
-    flex: 1 1 200px;
+    flex: 1 1 280px;
     min-width: 150px;
     transition: flex 0.3s ease, width 0.3s ease;
 }
+
 
 .kanban-resizer {
     position: absolute;
