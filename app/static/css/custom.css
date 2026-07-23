@@ -36,6 +36,36 @@
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
+/* Redefiniciones de Bootstrap para Modo Oscuro Coherente */
+[data-theme="dark"] .text-dark {
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: var(--surface-hover) !important;
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .border-secondary {
+    border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] ::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.65 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.65 !important;
+}
+
+
 body {
     background-color: var(--background);
     color: var(--text);
@@ -659,6 +689,32 @@ svg.lucide {
     background-color: rgba(239, 68, 68, 0.08) !important;
     color: #ef4444 !important;
 }
+
+/* Estilizado Zen de Pestañas de Navegación */
+.nav-tabs {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.nav-tabs .nav-item .nav-link {
+    color: var(--text-muted) !important;
+    border: none !important;
+    padding: 10px 16px !important;
+    background-color: transparent !important;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.nav-tabs .nav-item .nav-link:hover {
+    color: var(--text) !important;
+    background-color: transparent !important;
+}
+
+.nav-tabs .nav-item .nav-link.active {
+    color: var(--primary) !important;
+    background-color: transparent !important;
+    border-bottom: 2px solid var(--primary) !important;
+    border-radius: 0 !important;
+}
+
 
 
 

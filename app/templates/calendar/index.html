@@ -96,18 +96,19 @@
     <div class="col-lg-8">
         <div class="zen-card">
             <!-- Pestañas de Navegación -->
-            <ul class="nav nav-tabs border-bottom mb-4" id="calendarTabs" role="tablist" style="border-color: var(--border) !important;">
+            <ul class="nav nav-tabs border-bottom mb-4" id="calendarTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold text-dark bg-transparent border-0" id="agenda-tab" data-bs-toggle="tab" data-bs-target="#agenda-pane" type="button" role="tab" style="font-size: 0.9rem;">
+                    <button class="nav-link active fw-bold bg-transparent border-0" id="agenda-tab" data-bs-toggle="tab" data-bs-target="#agenda-pane" type="button" role="tab" style="font-size: 0.9rem;">
                         <i data-lucide="list" class="me-1" style="width: 14px; height: 14px; vertical-align: middle;"></i>Mi Agenda (Día)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold text-muted bg-transparent border-0" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-pane" type="button" role="tab" style="font-size: 0.9rem;" onclick="renderFullCalendar()">
+                    <button class="nav-link fw-bold bg-transparent border-0" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-pane" type="button" role="tab" style="font-size: 0.9rem;" onclick="renderFullCalendar()">
                         <i data-lucide="calendar-days" class="me-1" style="width: 14px; height: 14px; vertical-align: middle;"></i>Calendario Completo
                     </button>
                 </li>
             </ul>
+
 
             <div class="tab-content" id="calendarTabsContent">
                 <!-- Panel de Agenda (Día) -->
