@@ -116,4 +116,46 @@ def autogenerate():
         return render_template('calendar/partials/list.html', blocks=blocks, selected_date=selected_date)
     return redirect(url_for('calendar.index', date=selected_date.isoformat()))
 
+@calendar_bp.route('/events', methods=['GET'])
+def events():
+    from flask import jsonify
+    
+    events_list = []
+    
+    # 1. Bloques de tiempo del día
+    blocks = TimeBlock.query.all()
+    for block in blocks:
+        start_datetime = datetime.combine(block.date, block.start_time)
+        end_datetime = datetime.combine(block.date, block.end_time)
+        
+        color = "#2563eb" # Azul por defecto
+        if block.task and block.task.project:
+            color = block.task.project.color_hex
+        elif not block.task:
+            color = "#64748b" # Gris para libre
+            
+        events_list.append({
+            "id": f"block-{block.id}",
+            "title": block.title or (block.task.title if block.task else 'Bloque Libre'),
+            "start": start_datetime.isoformat(),
+            "end": end_datetime.isoformat(),
+            "color": color,
+            "allDay": False
+        })
+        
+    # 2. Deadlines de tareas del Kanban
+    tasks = Task.query.filter(Task.due_date.isnot(None)).all()
+    for task in tasks:
+        color = "#ef4444" # Rojo para deadlines
+        events_list.append({
+            "id": f"task-{task.id}",
+            "title": f"⚠️ Fin: {task.title}",
+            "start": task.due_date.isoformat(),
+            "color": color,
+            "allDay": True
+        })
+        
+    return jsonify(events_list)
+
+
 

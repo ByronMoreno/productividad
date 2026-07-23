@@ -1,6 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- FullCalendar CSS para adaptar estilo oscuro en modo nocturno -->
+<style>
+    .fc {
+        font-family: var(--font-sans) !important;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+    }
+    .fc .fc-button-primary {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-muted) !important;
+        text-transform: capitalize !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+    }
+    .fc .fc-button-primary:hover, .fc .fc-button-primary:active, .fc .fc-button-primary.fc-button-active {
+        background-color: var(--surface-hover) !important;
+        border-color: var(--border) !important;
+        color: var(--text) !important;
+    }
+    .fc .fc-button-primary:disabled {
+        background-color: var(--surface) !important;
+        opacity: 0.5 !important;
+    }
+    .fc-theme-standard td, .fc-theme-standard th {
+        border-color: var(--border) !important;
+    }
+    .fc .fc-col-header-cell-cushion, .fc .fc-daygrid-day-number {
+        color: var(--text) !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+    }
+    .fc .fc-daygrid-day.fc-day-today {
+        background-color: var(--surface-hover) !important;
+    }
+    .fc-event {
+        cursor: pointer !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        border-radius: 4px !important;
+        padding: 2px 4px !important;
+    }
+</style>
+
 <div class="row g-4">
     <!-- Formulario e Información -->
     <div class="col-lg-4">
@@ -45,38 +92,120 @@
         </div>
     </div>
 
-    <!-- Selector de Fecha y Listado de Bloques -->
+    <!-- Selector de Vista y Listado -->
     <div class="col-lg-8">
         <div class="zen-card">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h2 class="h4 mb-0 fw-bold">Mi Agenda</h2>
-                <div class="d-flex gap-2 align-items-center">
-                    <form action="{{ url_for('calendar.index') }}" method="GET" class="m-0">
-                        <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_date.isoformat() }}" onchange="this.form.submit()">
-                    </form>
-                    <form hx-post="{{ url_for('calendar.autogenerate') }}" 
-                          hx-target="#calendar-blocks-list" 
-                          hx-indicator="#autogen-indicator" 
-                          class="m-0">
-                        <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
-                        <button type="submit" class="btn btn-sm btn-zen py-1 px-3" style="font-size: 0.8rem;" title="Autogenerar el Time Blocking para hoy">
-                            <i data-lucide="sparkles" class="me-1" style="width: 14px; height: 14px;"></i>Planificar con IA
-                        </button>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Indicador de Carga de Autogeneración -->
-            <div id="autogen-indicator" class="htmx-indicator text-center py-3">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                <span class="text-zen-muted small ms-2">La IA está estructurando tu itinerario zen...</span>
-            </div>
-            
-            <div id="calendar-blocks-list">
+            <!-- Pestañas de Navegación -->
+            <ul class="nav nav-tabs border-bottom mb-4" id="calendarTabs" role="tablist" style="border-color: var(--border) !important;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold text-dark bg-transparent border-0" id="agenda-tab" data-bs-toggle="tab" data-bs-target="#agenda-pane" type="button" role="tab" style="font-size: 0.9rem;">
+                        <i data-lucide="list" class="me-1" style="width: 14px; height: 14px; vertical-align: middle;"></i>Mi Agenda (Día)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold text-muted bg-transparent border-0" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-pane" type="button" role="tab" style="font-size: 0.9rem;" onclick="renderFullCalendar()">
+                        <i data-lucide="calendar-days" class="me-1" style="width: 14px; height: 14px; vertical-align: middle;"></i>Calendario Completo
+                    </button>
+                </li>
+            </ul>
 
-                {% include "calendar/partials/list.html" %}
+            <div class="tab-content" id="calendarTabsContent">
+                <!-- Panel de Agenda (Día) -->
+                <div class="tab-pane fade show active" id="agenda-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h2 class="h5 mb-0 fw-bold">Agenda Diaria</h2>
+                        <div class="d-flex gap-2 align-items-center">
+                            <form action="{{ url_for('calendar.index') }}" method="GET" class="m-0">
+                                <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_date.isoformat() }}" onchange="this.form.submit()">
+                            </form>
+                            <form hx-post="{{ url_for('calendar.autogenerate') }}" 
+                                  hx-target="#calendar-blocks-list" 
+                                  hx-indicator="#autogen-indicator" 
+                                  class="m-0">
+                                <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
+                                <button type="submit" class="btn btn-sm btn-zen py-1 px-3" style="font-size: 0.8rem;" title="Autogenerar el Time Blocking para hoy">
+                                    <i data-lucide="sparkles" class="me-1" style="width: 14px; height: 14px;"></i>Planificar con IA
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div id="autogen-indicator" class="htmx-indicator text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="text-zen-muted small ms-2">La IA está estructurando tu itinerario zen...</span>
+                    </div>
+                    
+                    <div id="calendar-blocks-list">
+                        {% include "calendar/partials/list.html" %}
+                    </div>
+                </div>
+
+                <!-- Panel de Calendario Gráfico (FullCalendar) -->
+                <div class="tab-pane fade" id="grid-pane" role="tabpanel">
+                    <div id="full-calendar-container" style="min-height: 550px; color: var(--text) !important;"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- FullCalendar 6 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+    let calendar = null;
+    
+    function renderFullCalendar() {
+        // Esperar a que Bootstrap complete la animación del tab
+        setTimeout(() => {
+            const calendarEl = document.getElementById('full-calendar-container');
+            if (!calendarEl) return;
+            
+            if (calendar) {
+                calendar.refetchEvents();
+                calendar.render();
+                return;
+            }
+            
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                firstDay: 1, // Lunes inicio de semana
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día'
+                },
+                events: "{{ url_for('calendar.events') }}",
+                eventClick: function(info) {
+                    if (info.event.id.startsWith('task-')) {
+                        // Redirigir al tablero Kanban si hace clic en un deadline de tarea
+                        window.location.href = "{{ url_for('tasks.index') }}";
+                    }
+                }
+            });
+            calendar.render();
+        }, 150);
+    }
+
+    // Adaptar estilos de pestañas para herencia clara/oscura
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabElList = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', (event) => {
+                tabElList.forEach(el => {
+                    el.classList.remove('text-dark');
+                    el.classList.add('text-muted');
+                });
+                event.target.classList.remove('text-muted');
+                event.target.classList.add('text-dark');
+            });
+        });
+    });
+</script>
 {% endblock %}

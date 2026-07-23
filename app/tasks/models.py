@@ -49,6 +49,7 @@ class Task(db.Model):
 
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=True)
     project = db.relationship('Project', backref=db.backref('tasks', lazy=True, cascade="all, delete-orphan"))
+    notes = db.relationship('TaskNote', backref='task', lazy=True, cascade="all, delete-orphan", order_by="TaskNote.created_at.desc()")
 
     def to_dict(self):
         return {
@@ -63,3 +64,19 @@ class Task(db.Model):
             'project_id': self.project_id,
             'created_at': self.created_at.isoformat()
         }
+
+class TaskNote(db.Model):
+    __tablename__ = 'task_notes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False)
+
+    @property
+    def created_at_local(self):
+        if self.created_at:
+            utc_dt = self.created_at.replace(tzinfo=timezone.utc)
+            return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
+        return None
+

@@ -137,3 +137,21 @@ def edit(task_id):
         return render_template('tasks/partials/kanban.html', kanban=kanban)
     return redirect(url_for('tasks.index'))
 
+@tasks_bp.route('/<int:task_id>/notes/add', methods=['POST'])
+def add_note(task_id):
+    content = request.form.get('content')
+    task = db.get_or_404(Task, task_id)
+    if content and content.strip():
+        from app.tasks.models import TaskNote
+        note = TaskNote(
+            content=content.strip(),
+            task_id=task.id
+        )
+        db.session.add(note)
+        db.session.commit()
+    
+    if request.headers.get('HX-Request'):
+        return render_template('tasks/partials/notes_list.html', task=task)
+    return redirect(url_for('tasks.index'))
+
+

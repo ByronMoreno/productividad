@@ -70,6 +70,13 @@
                                 </span>
                             </div>
 
+                            {% if task.due_date %}
+                                <div class="text-danger small mt-2" style="font-size: 0.7rem; font-weight: 600;">
+                                    <i data-lucide="calendar" class="me-1" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                    Fecha de fin: {{ task.due_date.strftime('%d/%m/%Y') }}
+                                </div>
+                            {% endif %}
+
                             <div class="text-zen-muted small mb-2" style="font-size: 0.7rem; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 6px;">
                                 <i data-lucide="calendar-plus" class="me-1" style="width: 11px; height: 11px; vertical-align: middle;"></i>
                                 Creada: {{ task.created_at_local.strftime('%d/%m/%Y %H:%M') }}
@@ -245,8 +252,37 @@
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Fecha Límite</label>
-                                                    <input type="date" class="form-control" name="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
+                                                    <label class="form-label fw-bold text-danger">Fecha de Fin (Deadline obligatorio)</label>
+                                                    <input type="date" class="form-control border-danger" name="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
+                                                </div>
+                                            </div>
+
+                                            <!-- Bitácora de Anotaciones / Comentarios de Seguimiento -->
+                                            <div class="border-top pt-3 mt-3">
+                                                <h6 class="fw-bold mb-2 text-primary">
+                                                    <i data-lucide="book-open" class="me-1 text-primary" style="width: 14px; height: 14px; vertical-align: middle;"></i>Bitácora de Anotaciones
+                                                </h6>
+                                                
+                                                <div id="task-notes-list-{{ task.id }}">
+                                                    {% include "tasks/partials/notes_list.html" %}
+                                                </div>
+
+                                                <div class="input-group mt-2">
+                                                    <input type="text" 
+                                                           id="note-input-{{ task.id }}" 
+                                                           name="content"
+                                                           placeholder="Ej: Me quedé a medias por falta de permisos..." 
+                                                           class="form-control form-control-sm"
+                                                           style="font-size: 0.8rem;">
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-zen"
+                                                            hx-post="{{ url_for('tasks.add_note', task_id=task.id) }}"
+                                                            hx-include="#note-input-{{ task.id }}"
+                                                            hx-target="#task-notes-list-{{ task.id }}"
+                                                            hx-swap="innerHTML"
+                                                            hx-on::after-request="document.getElementById('note-input-{{ task.id }}').value = ''">
+                                                        Anotar
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
