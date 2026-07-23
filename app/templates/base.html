@@ -82,8 +82,13 @@
                         </a>
                     </li>
                     {% endif %}
+                    <li class="nav-item ms-lg-3 d-none d-lg-flex align-items-center text-zen-muted me-2" style="font-size: 0.82rem; font-weight: 500; border-right: 1px solid var(--border); padding-right: 15px;">
+                        <i data-lucide="calendar" class="me-1 text-primary" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                        <span id="current-date-navbar" class="text-capitalize"></span>
+                    </li>
                     <li class="nav-item ms-lg-2 d-flex align-items-center">
                         <a class="nav-link d-flex align-items-center py-0" href="{{ url_for('auth.profile') }}" title="Mi Perfil">
+
                             {% if current_user.profile_pic_filename %}
                                 <img src="{{ url_for('static', filename='uploads/profile_pics/' ~ current_user.profile_pic_filename) }}" 
                                      alt="Avatar" 
@@ -177,11 +182,19 @@
             }
         }
 
-        // Configuración inicial de UI del botón
+        // Configuración inicial de UI del botón y fecha del Navbar
         (function() {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             updateThemeToggleUI(currentTheme);
+
+            const navbarDateEl = document.getElementById('current-date-navbar');
+            if (navbarDateEl) {
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const todayDate = new Date();
+                navbarDateEl.textContent = todayDate.toLocaleDateString('es-ES', dateOptions);
+            }
         })();
     </script>
+
 </body>
 </html>

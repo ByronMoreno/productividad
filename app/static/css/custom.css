@@ -335,3 +335,241 @@ svg.lucide {
     padding: 10px 0 !important;
 }
 
+/* Rediseño Zen y Premium de la Tarjeta */
+.kanban-task {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.kanban-task:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Título */
+.task-title {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.task-title:hover {
+    color: var(--primary) !important;
+}
+
+/* Eliminar */
+.task-delete-btn {
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    padding: 2px !important;
+    border-radius: 4px;
+    opacity: 0.5;
+    transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-delete-btn:hover {
+    opacity: 1;
+    color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.task-delete-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Descripción */
+.task-desc {
+    font-size: 0.8rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.5 !important;
+    margin-top: 6px !important;
+    margin-bottom: 12px !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: pre-wrap;
+}
+
+/* Badges */
+.task-meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem !important;
+    font-weight: 500 !important;
+    background-color: var(--surface-hover) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+}
+
+.task-due-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    color: #ef4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.15) !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+}
+
+/* Estrellas */
+.energy-stars {
+    font-size: 0.8rem !important;
+    color: #fbbf24 !important; /* Ámbar / Oro */
+    letter-spacing: -1px;
+}
+
+/* Enlaces del cerebro */
+.task-brain-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    color: #06b6d4 !important; /* Cian */
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.task-brain-link:hover {
+    opacity: 0.8;
+}
+
+/* Separador Dashed */
+.border-top-dashed {
+    border-top: 1px dashed var(--border) !important;
+}
+
+/* Led Pulsante */
+.pulsing-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #10b981; /* Verde */
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.task-time-counter {
+    font-family: var(--bs-font-monospace), monospace !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: var(--text-muted) !important;
+}
+
+/* Botones de Control Enfoque */
+.btn-start-focus {
+    background-color: var(--primary) !important;
+    color: white !important;
+    border: none !important;
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    padding: 3px 10px !important;
+    border-radius: 6px !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.btn-start-focus:hover {
+    opacity: 0.9;
+}
+
+.btn-pause-focus {
+    background-color: var(--surface-hover) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-pause-focus:hover {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+    color: var(--text) !important;
+}
+
+.btn-complete-task {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    transition: opacity 0.2s;
+}
+
+.btn-complete-task:hover {
+    opacity: 0.9;
+}
+
+/* Dropdowns Inferiores Translúcidos */
+.btn-action-dropdown {
+    width: 100%;
+    text-align: center;
+    background-color: var(--surface-hover) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+    font-size: 0.7rem !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-action-dropdown:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+    color: var(--text) !important;
+}
+
+.btn-action-icon {
+    background-color: var(--surface-hover) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border) !important;
+    font-size: 0.7rem !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-action-icon:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+    color: var(--text) !important;
+}
+
+

@@ -63,117 +63,106 @@
                                     {% set border_color = '#3b82f6' %}
                                 {% endif %}
                             {% endif %}
-                            <div class="kanban-task" draggable="true" ondragstart="drag(event)" id="task-{{ task.id }}" style="border-left: 3px solid {{ border_color }}; cursor: grab;">
+                            <div class="kanban-task" draggable="true" ondragstart="drag(event)" id="task-{{ task.id }}" style="border-left: 4px solid {{ border_color }}; cursor: grab;">
 
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h4 class="h6 fw-bold mb-0 text-break" title="Editar tarea" 
-                                        style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" 
+                                <!-- Fila Superior: Título y Eliminar -->
+                                <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                                    <h4 class="task-title" title="Ver / Editar tarea" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#editTaskModal{{ task.id }}">
                                         {{ task.title }}
                                     </h4>
-                                    <button class="btn btn-sm text-danger p-0 border-0 bg-transparent" 
+                                    <button class="task-delete-btn" 
                                             hx-delete="{{ url_for('tasks.delete', task_id=task.id) }}"
                                             hx-target="#kanban-board"
                                             hx-swap="innerHTML"
                                             hx-confirm="¿Seguro que deseas eliminar esta tarea?">
-                                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                        <i data-lucide="x"></i>
                                     </button>
                                 </div>
                                 
+                                <!-- Descripción -->
                                 {% if task.description %}
-                                    <p class="text-zen-muted small mb-3 text-break" style="font-size: 0.85rem; white-space: pre-wrap; line-height: 1.4;">{{ task.description }}</p>
+                                    <p class="task-desc">{{ task.description }}</p>
                                 {% endif %}
                                 
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-light text-muted border border-secondary" style="font-size: 0.7rem;">
-                                        <i data-lucide="clock" class="me-1"></i>{{ task.estimated_time }}m
-                                    </span>
-                                    <span class="energy-star small">
+                                <!-- Fila de Badges y Energía -->
+                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="task-meta-badge" title="Tiempo estimado">
+                                            <i data-lucide="clock" style="width: 11px; height: 11px;"></i>{{ task.estimated_time }}m
+                                        </span>
+                                        {% if task.due_date %}
+                                            <span class="task-due-badge" title="Fecha límite">
+                                                <i data-lucide="calendar" style="width: 11px; height: 11px;"></i>{{ task.due_date.strftime('%d/%m') }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="energy-stars" title="Energía requerida: {{ task.energy }}/5">
                                         {% for i in range(task.energy) %}★{% endfor %}
                                     </span>
                                 </div>
 
-                                {% if task.due_date %}
-                                    <div class="text-danger small mt-2" style="font-size: 0.7rem; font-weight: 600;">
-                                        <i data-lucide="calendar" class="me-1" style="width: 12px; height: 12px; vertical-align: middle;"></i>
-                                        Fecha de fin: {{ task.due_date.strftime('%d/%m/%Y') }}
+                                <!-- Bitácora / Segundo Cerebro indicador -->
+                                {% if task.knowledge_nodes.count() > 0 %}
+                                    <div class="mb-2">
+                                        <a href="{{ url_for('knowledge.index') }}" class="task-brain-link" title="Ver notas asociadas">
+                                            <i data-lucide="brain-circuit" style="width: 12px; height: 12px; vertical-align: middle;"></i>
+                                            <span>{{ task.knowledge_nodes.count() }} notas</span>
+                                        </a>
                                     </div>
                                 {% endif %}
 
-                                <div class="text-zen-muted small mb-2" style="font-size: 0.7rem; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 6px;">
-                                    <i data-lucide="calendar-plus" class="me-1" style="width: 11px; height: 11px; vertical-align: middle;"></i>
-                                    Creada: {{ task.created_at_local.strftime('%d/%m/%Y %H:%M') }}
-                                </div>
-
-                                {% if ns.active_session and task.started_at_local %}
-                                    <div class="text-primary small mb-2" style="font-size: 0.7rem; font-weight: 500;">
-                                        <i data-lucide="play" class="me-1 text-primary" style="width: 11px; height: 11px; vertical-align: middle;"></i>
-                                        Iniciado a las: {{ task.started_at_local.strftime('%H:%M') }}
-                                    </div>
-                                {% endif %}
-
-                                {% if task.status == 'DONE' and task.completed_at_local %}
-                                    <div class="text-success small mb-2" style="font-size: 0.7rem; font-weight: 500;">
-                                        <i data-lucide="check-circle" class="me-1 text-success" style="width: 11px; height: 11px; vertical-align: middle;"></i>
-                                        Finalizado a las: {{ task.completed_at_local.strftime('%H:%M') }}
-                                    </div>
-                                {% endif %}
-
-                                <!-- Botones de Control de Temporizador en la Tarjeta -->
-                                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-light">
-                                    <div class="text-zen-muted small" style="font-size: 0.7rem;">
-                                        {% if ns.accumulated_seconds > 0 %}
-                                            <i data-lucide="play-circle" class="text-primary me-1" style="width: 10px; height: 10px; vertical-align: middle;"></i>
-                                            {{ (ns.accumulated_seconds / 60) | int }}m {{ ns.accumulated_seconds % 60 }}s
-                                        {% else %}
-                                            Sin iniciar
+                                <!-- Fila de Cronómetro e Inicio/Pausa -->
+                                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top-dashed">
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if ns.active_session %}
+                                            <span class="pulsing-led" title="Sesión activa"></span>
                                         {% endif %}
+                                        <span class="task-time-counter">
+                                            {% if ns.accumulated_seconds > 0 %}
+                                                {{ (ns.accumulated_seconds / 60) | int }}m {{ ns.accumulated_seconds % 60 }}s
+                                            {% else %}
+                                                0m 0s
+                                            {% endif %}
+                                        </span>
                                     </div>
+                                    
                                     <div class="d-flex gap-1">
                                         {% if ns.active_session %}
-                                            <button class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size: 0.65rem;"
+                                            <button class="btn btn-xs btn-pause-focus"
                                                     hx-post="{{ url_for('analytics.pause_focus', session_id=ns.active_session.id, src='kanban') }}"
                                                     hx-target="#kanban-board"
                                                     hx-swap="innerHTML"
-                                                    title="Detener temporizador">
+                                                    title="Pausar sesión">
                                                 <i data-lucide="pause" style="width: 10px; height: 10px;"></i>
                                             </button>
-                                            <button class="btn btn-xs btn-brain-off py-1 px-2" style="font-size: 0.65rem;"
+                                            <button class="btn btn-xs btn-complete-task"
                                                     hx-post="{{ url_for('analytics.complete_task', task_id=task.id) }}"
                                                     hx-target="#kanban-board"
                                                     hx-swap="innerHTML"
-                                                    title="Terminar tarea">
+                                                    title="Completar actividad">
                                                 <i data-lucide="check" style="width: 10px; height: 10px;"></i>
                                             </button>
                                         {% else %}
                                             {% if task.status != 'DONE' %}
-                                                <button class="btn btn-xs btn-zen py-1 px-2" style="font-size: 0.65rem;"
+                                                <button class="btn btn-xs btn-start-focus"
                                                         hx-post="{{ url_for('analytics.start_focus', task_id=task.id, src='kanban') }}"
                                                         hx-target="#kanban-board"
                                                         hx-swap="innerHTML"
-                                                        title="Iniciar temporizador">
-                                                    <i data-lucide="play" style="width: 10px; height: 10px;"></i>
-                                                    {% if ns.accumulated_seconds > 0 %}Reanudar{% else %}Iniciar{% endif %}
+                                                        title="Iniciar enfoque">
+                                                    <i data-lucide="play" style="width: 9px; height: 9px;"></i>
+                                                    <span>{% if ns.accumulated_seconds > 0 %}Reanudar{% else %}Iniciar{% endif %}</span>
                                                 </button>
                                             {% endif %}
                                         {% endif %}
                                     </div>
                                 </div>
 
-                                <!-- Enlaces de Segundo Cerebro en la Tarjeta -->
-                                {% if task.knowledge_nodes.count() > 0 %}
-                                    <div class="mt-2 text-start">
-                                        <a href="{{ url_for('knowledge.index') }}" class="text-decoration-none" style="font-size: 0.7rem; color: var(--primary); font-weight: 500;" title="Ver notas del Segundo Cerebro">
-                                            <i data-lucide="book-open" class="me-1"></i>{{ task.knowledge_nodes.count() }} nota(s)
-                                        </a>
-                                    </div>
-                                {% endif %}
-
-                                <!-- Mover a... y Delegación -->
-                                <div class="d-flex gap-1 mt-3">
+                                <!-- Fila Inferior de Acciones Translúcidas -->
+                                <div class="d-flex gap-1 mt-2">
                                     <div class="dropdown flex-grow-1">
-                                        <button class="btn btn-sm btn-light w-100 py-1 text-zen-muted border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem;">
+                                        <button class="btn btn-sm btn-action-dropdown dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                             Mover a...
                                         </button>
                                         <ul class="dropdown-menu" style="font-size: 0.75rem;">
@@ -199,7 +188,7 @@
                                     </div>
                                     
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary w-100 py-1 text-zen-muted border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem;" title="Delegar / Transferir tarea">
+                                        <button class="btn btn-sm btn-action-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Delegar tarea">
                                             <i data-lucide="share-2" style="width: 11px; height: 11px; vertical-align: middle;"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end p-2" style="font-size: 0.75rem; min-width: 180px;">
@@ -224,6 +213,7 @@
                                     </div>
                                 </div>
                             </div>
+
 
                             <!-- Modal de Detalle y Edición por Tarea (Notion style) -->
                             <div class="modal fade" id="editTaskModal{{ task.id }}" tabindex="-1" aria-hidden="true">

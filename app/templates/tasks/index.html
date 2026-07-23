@@ -3,18 +3,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="display-6 fw-bold mb-1">Kanban Inteligente</h1>
-        <div class="d-flex align-items-center gap-2 text-zen-muted small mb-0 flex-wrap">
-            <i data-lucide="calendar" class="text-primary" style="width: 13px; height: 13px; vertical-align: middle;"></i>
-            <span class="text-capitalize fw-semibold text-dark" id="current-date-header" style="color: var(--text) !important;"></span>
-            <span class="text-muted d-none d-sm-inline">•</span>
-            <span>Visualiza y gestiona el flujo de tus actividades.</span>
-        </div>
+        <h1 class="display-6 fw-bold mb-0">Kanban Inteligente</h1>
+        <p class="text-zen-muted small mb-0">Visualiza y gestiona el flujo de tus actividades.</p>
     </div>
     <button class="btn btn-zen" data-bs-toggle="modal" data-bs-target="#createTaskModal">
         <i data-lucide="plus" class="me-2"></i>Nueva Tarea
     </button>
 </div>
+
 
 
 <div id="kanban-board" class="mt-4">
@@ -244,29 +240,19 @@
         });
     }
 
-    function updateHeaderDate() {
-        const headerEl = document.getElementById('current-date-header');
-        if (headerEl) {
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const todayDate = new Date();
-            headerEl.textContent = todayDate.toLocaleDateString('es-ES', dateOptions);
-        }
-    }
-
     // Inicializar al cargar la página
     document.addEventListener('DOMContentLoaded', () => {
         applyStoredColumnStates();
-        updateHeaderDate();
     });
 
     // Hidratar tras swaps de HTMX
     document.body.addEventListener('htmx:afterSwap', function(evt) {
         lucide.createIcons();
         applyStoredColumnStates();
-        updateHeaderDate();
     });
 </script>
 {% endblock %}
+
 
 
 
