@@ -102,8 +102,9 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if u.groups.count() > 0 %}
+                                    {% if u.groups | length > 0 %}
                                         <div class="d-flex flex-wrap gap-1">
+
                                             {% for g in u.groups %}
                                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle small py-1 px-2" style="font-size: 0.75rem;">
                                                     {{ g.name }}

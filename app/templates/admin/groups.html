@@ -79,9 +79,10 @@
                                     <td class="small text-muted">{{ g.description or 'Sin descripción' }}</td>
                                     <td class="text-center">
                                         <span class="badge bg-light text-primary border border-primary-subtle">
-                                            {{ g.users.count() }} usuarios
+                                            {{ g.users | length }} usuarios
                                         </span>
                                     </td>
+
                                     <td class="text-end">
                                         <form action="{{ url_for('admin.delete_group', group_id=g.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar el grupo {{ g.name }}? Esto desvinculará a todos sus miembros actuales.');">
                                             <button type="submit" class="btn btn-sm btn-outline-danger p-1" title="Eliminar grupo">
