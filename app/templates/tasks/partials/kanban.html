@@ -111,7 +111,7 @@
                                 <div class="d-flex gap-1">
                                     {% if ns.active_session %}
                                         <button class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size: 0.65rem;"
-                                                hx-post="{{ url_for('analytics.pause_focus', session_id=ns.active_session.id) }}"
+                                                hx-post="{{ url_for('analytics.pause_focus', session_id=ns.active_session.id, src='kanban') }}"
                                                 hx-target="#kanban-board"
                                                 hx-swap="innerHTML"
                                                 title="Detener temporizador">
@@ -127,7 +127,7 @@
                                     {% else %}
                                         {% if task.status != 'DONE' %}
                                             <button class="btn btn-xs btn-zen py-1 px-2" style="font-size: 0.65rem;"
-                                                    hx-post="{{ url_for('analytics.start_focus', task_id=task.id) }}"
+                                                    hx-post="{{ url_for('analytics.start_focus', task_id=task.id, src='kanban') }}"
                                                     hx-target="#kanban-board"
                                                     hx-swap="innerHTML"
                                                     title="Iniciar temporizador">

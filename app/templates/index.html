@@ -47,12 +47,17 @@
                 <div class="w-100 mx-auto" style="max-width: 320px;">
                     <div class="d-flex gap-2 mb-2">
                         <!-- Botón Iniciar / Reanudar -->
-                        <button class="btn btn-zen flex-grow-1 py-2" id="btn-start-focus" onclick="startFocusSession('{{ active_task.id }}')">
-                            <i data-lucide="play" class="me-2"></i>Iniciar
+                        <button class="btn btn-zen flex-grow-1 py-2" id="btn-start-focus" 
+                                hx-post="{{ url_for('analytics.start_focus', task_id=active_task.id) }}"
+                                hx-target="body">
+                            <i data-lucide="play" class="me-2"></i>{% if accumulated_seconds > 0 %}Reanudar{% else %}Iniciar{% endif %}
                         </button>
                         
                         <!-- Botón Detener / Pausar (oculto por defecto) -->
-                        <button class="btn btn-outline-secondary flex-grow-1 py-2" id="btn-pause-focus" onclick="pauseFocusSession()" style="display: none;">
+                        <button class="btn btn-outline-secondary flex-grow-1 py-2" id="btn-pause-focus" 
+                                hx-post="{{ url_for('analytics.pause_focus', session_id=active_session.id if active_session else 0) }}"
+                                hx-target="body"
+                                style="display: none;">
                             <i data-lucide="pause" class="me-2"></i>Detener
                         </button>
                     </div>
@@ -236,77 +241,38 @@
 </div>
 
 <script>
-    let focusSessionId = null;
+    let focusSessionId = {{ active_session.id if active_session else 'null' }};
     let focusTimer = null;
     let focusSeconds = {{ accumulated_seconds or 0 }};
     let idleTimer = null;
-    let isFocusActive = false;
+    let isFocusActive = {{ 'true' if is_focus_active else 'false' }};
 
     // Formatear el cronómetro inicialmente en la carga
     updateTimerDisplay();
+
+    // Arrancar el cronómetro automáticamente si está activo en base de datos
+    if (isFocusActive) {
+        document.getElementById('btn-start-focus').style.display = 'none';
+        document.getElementById('btn-pause-focus').style.display = 'inline-block';
+        document.getElementById('focus-sub-controls').style.setProperty('display', 'flex', 'important');
+        document.getElementById('timer-status').innerText = 'Trabajando...';
+        document.getElementById('timer-status').classList.add('text-primary');
+        
+        focusTimer = setInterval(() => {
+            focusSeconds++;
+            updateTimerDisplay();
+        }, 1000);
+
+        resetIdleTimer();
+        window.onload = resetIdleTimer;
+        document.onmousemove = resetIdleTimer;
+        document.onkeydown = resetIdleTimer;
+    }
 
     function updateTimerDisplay() {
         let m = Math.floor(focusSeconds / 60).toString().padStart(2, '0');
         let s = (focusSeconds % 60).toString().padStart(2, '0');
         document.getElementById('timer-count').innerText = `${m}:${s}`;
-    }
-
-    function startFocusSession(taskId) {
-        fetch(`/analytics/start-focus/${taskId}`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                focusSessionId = data.session_id;
-                isFocusActive = true;
-                
-                // Actualizar botonera
-                document.getElementById('btn-start-focus').style.display = 'none';
-                document.getElementById('btn-pause-focus').style.display = 'inline-block';
-                document.getElementById('focus-sub-controls').style.setProperty('display', 'flex', 'important');
-                document.getElementById('timer-status').innerText = 'Trabajando...';
-                document.getElementById('timer-status').classList.add('text-primary');
-                
-                // Correr cronómetro
-                focusTimer = setInterval(() => {
-                    focusSeconds++;
-                    updateTimerDisplay();
-                }, 1000);
-
-                resetIdleTimer();
-                window.onload = resetIdleTimer;
-                document.onmousemove = resetIdleTimer;
-                document.onkeydown = resetIdleTimer;
-                
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-            });
-    }
-
-    function pauseFocusSession() {
-        if (!focusSessionId) return;
-        
-        // Pausar UI
-        clearInterval(focusTimer);
-        isFocusActive = false;
-        clearTimeout(idleTimer);
-        
-        fetch(`/analytics/pause-focus/${focusSessionId}`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                focusSessionId = null;
-                
-                // Mostrar botón de Reanudar
-                document.getElementById('btn-start-focus').style.display = 'inline-block';
-                document.getElementById('btn-start-focus').innerHTML = '<i data-lucide="rotate-ccw" class="me-2"></i>Reanudar';
-                document.getElementById('btn-pause-focus').style.display = 'none';
-                document.getElementById('focus-sub-controls').style.setProperty('display', 'none', 'important');
-                document.getElementById('timer-status').innerText = 'Detenido (Pausado)';
-                document.getElementById('timer-status').classList.remove('text-primary');
-                
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-            });
     }
 
     function logInterruption() {

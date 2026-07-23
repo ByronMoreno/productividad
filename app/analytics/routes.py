@@ -76,6 +76,8 @@ def start_focus(task_id):
     active_sessions = FocusSession.query.filter_by(end_time=None).all()
     for s in active_sessions:
         s.end_time = now
+        if s.task:
+            s.task.status = 'TODAY'
         
     # 2. Regresar cualquier otra tarea en PROGRESS a TODAY
     other_progress_tasks = Task.query.filter(Task.status == 'PROGRESS', Task.id != task_id).all()
@@ -92,10 +94,14 @@ def start_focus(task_id):
     db.session.commit()
     
     if request.headers.get('HX-Request'):
+        src = request.args.get('src') or request.form.get('src')
+        if src == 'kanban':
+            return render_kanban_partial()
         response = jsonify({'status': 'success', 'session_id': session.id})
         response.headers['HX-Redirect'] = url_for('core.index')
         return response
     return redirect(url_for('core.index'))
+
 
 
 @analytics_bp.route('/log-interruption/<int:session_id>', methods=['POST'])
@@ -155,11 +161,18 @@ def pause_focus(session_id):
     session = db.session.get(FocusSession, session_id)
     if session:
         session.end_time = datetime.utcnow()
+        if session.task:
+            session.task.status = 'TODAY'
         db.session.commit()
         
     if request.headers.get('HX-Request'):
-        return render_kanban_partial()
-    return jsonify({'status': 'paused'})
+        src = request.args.get('src') or request.form.get('src')
+        if src == 'kanban':
+            return render_kanban_partial()
+        response = jsonify({'status': 'paused'})
+        response.headers['HX-Redirect'] = url_for('core.index')
+        return response
+    return redirect(url_for('core.index'))
 
 @analytics_bp.route('/complete-task/<int:task_id>', methods=['POST'])
 def complete_task(task_id):

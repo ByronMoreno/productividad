@@ -46,12 +46,19 @@ def index():
         ).order_by(Task.energy.asc(), Task.priority.desc()).first()
 
     accumulated_seconds = 0
+    is_focus_active = False
+    active_session = None
     if active_task:
         from app.analytics.models import FocusSession
         sessions = FocusSession.query.filter_by(task_id=active_task.id).all()
         for s in sessions:
             if s.end_time:
                 accumulated_seconds += int((s.end_time - s.start_time).total_seconds())
+            else:
+                active_session = s
+                is_focus_active = True
+                current_span = int((datetime.utcnow() - s.start_time).total_seconds())
+                accumulated_seconds += current_span
 
     return render_template('index.html', 
                            inbox_items=inbox_items, 
@@ -59,8 +66,11 @@ def index():
                            today_tasks=today_tasks,
                            active_task=active_task,
                            accumulated_seconds=accumulated_seconds,
+                           is_focus_active=is_focus_active,
+                           active_session=active_session,
                            today=today,
                            status=status)
+
 
 
 
