@@ -47,7 +47,8 @@ class Group(db.Model):
     description = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    users = db.relationship('User', secondary=user_group_association, backref=db.backref('groups', lazy='dynamic'))
+    users = db.relationship('User', secondary=user_group_association, backref=db.backref('groups'))
+
 
     def to_dict(self):
         return {
