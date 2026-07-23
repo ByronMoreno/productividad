@@ -4,7 +4,7 @@ from app.core.models import UserStatus
 from app.inbox.models import InboxItem
 from app.tasks.models import Task
 from app.calendar.models import TimeBlock
-from datetime import date
+from datetime import date, datetime
 
 core_bp = Blueprint('core', __name__)
 
