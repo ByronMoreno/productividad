@@ -70,17 +70,33 @@ def render_kanban_partial():
 
 @analytics_bp.route('/start-focus/<int:task_id>', methods=['POST'])
 def start_focus(task_id):
+    now = datetime.utcnow()
+    
+    # 1. Cerrar cualquier sesión de enfoque activa en la base de datos
+    active_sessions = FocusSession.query.filter_by(end_time=None).all()
+    for s in active_sessions:
+        s.end_time = now
+        
+    # 2. Regresar cualquier otra tarea en PROGRESS a TODAY
+    other_progress_tasks = Task.query.filter(Task.status == 'PROGRESS', Task.id != task_id).all()
+    for t in other_progress_tasks:
+        t.status = 'TODAY'
+        
+    # 3. Establecer la nueva tarea en PROGRESS e iniciar su sesión
     task = db.session.get(Task, task_id)
     if task:
         task.status = 'PROGRESS'
     
-    session = FocusSession(task_id=task_id)
+    session = FocusSession(task_id=task_id, start_time=now)
     db.session.add(session)
     db.session.commit()
     
     if request.headers.get('HX-Request'):
-        return render_kanban_partial()
-    return jsonify({'session_id': session.id})
+        response = jsonify({'status': 'success', 'session_id': session.id})
+        response.headers['HX-Redirect'] = url_for('core.index')
+        return response
+    return redirect(url_for('core.index'))
+
 
 @analytics_bp.route('/log-interruption/<int:session_id>', methods=['POST'])
 def log_interruption(session_id):
