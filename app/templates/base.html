@@ -94,6 +94,22 @@
             lucide.createIcons();
         });
 
+        // Limpiar modales y backdrops de Bootstrap antes del swap de HTMX
+        document.body.addEventListener('htmx:beforeSwap', function(evt) {
+            const activeModals = document.querySelectorAll('.modal.show');
+            activeModals.forEach(modalEl => {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            });
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+
+
         // Lógica de Theme Toggle
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
