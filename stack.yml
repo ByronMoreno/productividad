@@ -34,6 +34,8 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@dbproductividad:${POSTGRES_PORT}/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - uploads_data:/app/app/static/uploads
     networks:
       - productivity-net
       - traefik-public
@@ -60,6 +62,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@dbproductividad:${POSTGRES_PORT}/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - uploads_data:/app/app/static/uploads
     networks:
       - productivity-net
     deploy:
@@ -68,6 +72,7 @@ services:
 
 volumes:
   pgdata:
+  uploads_data:
 
 networks:
   productivity-net:

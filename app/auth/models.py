@@ -10,6 +10,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default='USER') # 'USER', 'ADMIN'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    profile_pic_filename = db.Column(db.String(255), nullable=True)
+
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

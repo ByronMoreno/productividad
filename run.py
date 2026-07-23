@@ -25,7 +25,16 @@ if __name__ == '__main__':
                         db.session.rollback()
                         print(f"Nota: Columna user_id en {table} ya existe o requiere verificación. ({e})")
 
+                # Asegurar columna profile_pic_filename en la tabla users
+                try:
+                    db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_pic_filename VARCHAR(255)"))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Nota: Columna profile_pic_filename en users ya existe o requiere verificación. ({e})")
+
                 # Crear administrador inicial
+
                 from app.auth.models import User
                 admin = User.query.filter_by(email='bmoreno@uees.edu.ec').first()
                 if not admin:

@@ -80,6 +80,22 @@
                         </a>
                     </li>
                     {% endif %}
+                    <li class="nav-item ms-lg-2 d-flex align-items-center">
+                        <a class="nav-link d-flex align-items-center py-0" href="{{ url_for('auth.profile') }}" title="Mi Perfil">
+                            {% if current_user.profile_pic_filename %}
+                                <img src="{{ url_for('static', filename='uploads/profile_pics/' ~ current_user.profile_pic_filename) }}" 
+                                     alt="Avatar" 
+                                     class="rounded-circle border border-primary me-2" 
+                                     style="width: 28px; height: 28px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 28px; height: 28px; font-size: 0.8rem; background: linear-gradient(135deg, var(--primary), #818cf8);">
+                                    {{ current_user.email[0] | upper }}
+                                </div>
+                            {% endif %}
+                            <span class="d-lg-none">{{ current_user.email }}</span>
+                        </a>
+                    </li>
                     <li class="nav-item ms-lg-2">
                         <a class="btn btn-sm btn-outline-danger py-1 px-3 mt-1 mt-lg-0" href="{{ url_for('auth.logout') }}">
                             <i data-lucide="log-out" class="me-1" style="width: 13px; height: 13px; vertical-align: middle;"></i>Salir
@@ -87,6 +103,7 @@
                     </li>
                 </ul>
             </div>
+
             {% else %}
             <div class="d-flex align-items-center order-lg-last">
                 <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
