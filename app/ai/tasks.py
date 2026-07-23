@@ -18,9 +18,13 @@ def process_inbox_item_task(item_id: int):
     project_id = None
     if project_name:
         project_name = project_name.strip()
-        project = Project.query.filter_by(name=project_name).first()
+        project = Project.query.filter_by(name=project_name, user_id=item.user_id).first()
         if not project:
-            project = Project(name=project_name, description=f"Creado automáticamente por la IA para {project_name}.")
+            project = Project(
+                name=project_name, 
+                description=f"Creado automáticamente por la IA para {project_name}.",
+                user_id=item.user_id
+            )
             db.session.add(project)
             db.session.commit()
         project_id = project.id
@@ -41,7 +45,8 @@ def process_inbox_item_task(item_id: int):
         priority=data.get('priority', 'MEDIUM'),
         estimated_time=data.get('estimated_time', 30),
         due_date=due_date,
-        project_id=project_id
+        project_id=project_id,
+        user_id=item.user_id
     )
     
     db.session.add(task)
@@ -50,4 +55,5 @@ def process_inbox_item_task(item_id: int):
     item.processed_at = datetime.utcnow()
     
     db.session.commit()
+
     return f"Inbox item {item_id} clasificado como tarea: '{task.title}'"

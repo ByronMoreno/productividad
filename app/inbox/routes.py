@@ -25,9 +25,13 @@ def add():
         db.session.add(item)
         db.session.commit()
         
-        # Invocar procesamiento asíncrono con IA
+        # Invocar procesamiento con IA síncronamente para inmediatez y fiabilidad
         from app.ai.tasks import process_inbox_item_task
-        process_inbox_item_task.delay(item.id)
+        try:
+            process_inbox_item_task(item.id)
+        except Exception as e:
+            print(f"Error procesando item de inbox síncronamente: {e}")
+
     
     items = InboxItem.query.filter_by(is_processed=False, user_id=u_id).order_by(InboxItem.created_at.desc()).all()
 
