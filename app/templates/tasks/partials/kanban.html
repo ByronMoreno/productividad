@@ -1,4 +1,4 @@
-<div class="row g-3 flex-nowrap overflow-auto pb-3" style="min-height: calc(100vh - 220px);">
+<div class="d-flex gap-3 w-100 flex-nowrap overflow-auto pb-3" style="min-height: calc(100vh - 220px);">
     {% for status, display_name, icon in [
         ('PENDING', 'Pendientes', 'list-todo'),
         ('TODAY', 'Para Hoy', 'calendar-days'),
@@ -6,7 +6,7 @@
         ('WAITING', 'Esperando', 'hourglass'),
         ('DONE', 'Completado', 'check-circle')
     ] %}
-        <div class="col-auto kanban-column position-relative" id="col-{{ status }}" style="width: 300px; min-width: 55px; transition: width 0.3s ease;">
+        <div class="kanban-column position-relative" id="col-{{ status }}">
             <!-- Divisor de redimensionamiento (Resizer) -->
             <div class="kanban-resizer" onmousedown="initResize(event, 'col-{{ status }}')"></div>
             
@@ -14,7 +14,7 @@
                 <!-- Cabecera visible cuando está expandida -->
                 <div class="d-flex justify-content-between align-items-center mb-3 kanban-header">
                     <div class="d-flex align-items-center text-truncate">
-                        {% if status != 'PROGRESS' %}
+                        {% if status != 'PROGRESS' or kanban['PROGRESS']|length == 0 %}
                             <button type="button" class="btn btn-sm text-zen-muted p-0 border-0 me-2 d-flex align-items-center" onclick="toggleCollapseColumn('{{ status }}')" title="Contraer columna">
                                 <i data-lucide="chevron-left" class="collapse-icon-{{ status }}" style="width: 14px; height: 14px;"></i>
                             </button>
@@ -25,6 +25,7 @@
                     </div>
                     <span class="badge bg-light text-muted border border-secondary rounded-pill kanban-count">{{ kanban[status]|length }}</span>
                 </div>
+
 
                 <!-- Cabecera / Título vertical cuando está colapsada -->
                 <div class="collapsed-title d-none flex-column align-items-center py-3" onclick="toggleCollapseColumn('{{ status }}')" style="cursor: pointer; height: 100%;">

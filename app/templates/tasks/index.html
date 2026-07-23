@@ -170,9 +170,9 @@
     function doResize(e) {
         if (!resizingCol) return;
         const width = startWidth + (e.clientX - startX);
-        if (width >= 200 && width <= 600) { // Límites de ancho
+        if (width >= 150 && width <= 600) {
             resizingCol.style.width = width + 'px';
-            // Guardar en localStorage
+            resizingCol.style.flex = `0 0 ${width}px`;
             const colId = resizingCol.id.replace('col-', '');
             localStorage.setItem(`kanban-col-width-${colId}`, width + 'px');
         }
@@ -188,10 +188,13 @@
     }
 
     function toggleCollapseColumn(status) {
-        if (status === 'PROGRESS') return; // En proceso no se puede colapsar
-
         const col = document.getElementById(`col-${status}`);
         if (!col) return;
+
+        if (status === 'PROGRESS') {
+            const taskCount = col.querySelectorAll('.kanban-task').length;
+            if (taskCount > 0) return; // Si tiene tareas, no se permite colapsar
+        }
 
         const isCollapsed = col.classList.toggle('collapsed');
         localStorage.setItem(`kanban-col-collapsed-${status}`, isCollapsed ? 'true' : 'false');
@@ -204,19 +207,32 @@
             const col = document.getElementById(`col-${status}`);
             if (!col) return;
 
-            // Aplicar ancho guardado
-            const storedWidth = localStorage.getItem(`kanban-col-width-${status}`);
-            if (storedWidth) {
-                col.style.width = storedWidth;
+            // Descolapsar automáticamente PROGRESS si tiene tareas
+            if (status === 'PROGRESS') {
+                const taskCount = col.querySelectorAll('.kanban-task').length;
+                if (taskCount > 0) {
+                    col.classList.remove('collapsed');
+                    localStorage.setItem('kanban-col-collapsed-PROGRESS', 'false');
+                }
             }
 
             // Aplicar colapso guardado
-            if (status !== 'PROGRESS') {
-                const storedCollapsed = localStorage.getItem(`kanban-col-collapsed-${status}`);
-                if (storedCollapsed === 'true') {
-                    col.classList.add('collapsed');
-                } else if (storedCollapsed === 'false') {
-                    col.classList.remove('collapsed');
+            const storedCollapsed = localStorage.getItem(`kanban-col-collapsed-${status}`);
+            if (storedCollapsed === 'true') {
+                col.classList.add('collapsed');
+                col.style.width = '55px';
+                col.style.flex = '0 0 55px';
+            } else {
+                col.classList.remove('collapsed');
+                
+                // Aplicar ancho guardado si está expandida
+                const storedWidth = localStorage.getItem(`kanban-col-width-${status}`);
+                if (storedWidth) {
+                    col.style.width = storedWidth;
+                    col.style.flex = `0 0 ${storedWidth}`;
+                } else {
+                    col.style.width = '';
+                    col.style.flex = ''; // Flexbox proporcional
                 }
             }
         });
@@ -232,6 +248,7 @@
         lucide.createIcons();
         applyStoredColumnStates();
     });
+
 </script>
 {% endblock %}
 
