@@ -183,6 +183,7 @@
     function stopResize(e) {
         if (resizingCol) {
             resizingCol.querySelector('.kanban-resizer').classList.remove('resizing');
+            resizingCol.style.width = ''; // Limpiar width inline tras soltar para restaurar elasticidad pura
         }
         document.documentElement.removeEventListener('mousemove', doResize, false);
         document.documentElement.removeEventListener('mouseup', stopResize, false);
@@ -226,19 +227,19 @@
                 col.style.flex = '0 0 55px';
             } else {
                 col.classList.remove('collapsed');
+                col.style.width = ''; // Quitar width inline para que crezca elásticamente al 100%
                 
-                // Aplicar ancho guardado si está expandida
+                // Aplicar ancho guardado como base flexible
                 const storedWidth = localStorage.getItem(`kanban-col-width-${status}`);
                 if (storedWidth) {
-                    col.style.width = storedWidth;
                     col.style.flex = `1 1 ${storedWidth}`;
                 } else {
-                    col.style.width = '';
-                    col.style.flex = ''; // Flexbox proporcional
+                    col.style.flex = ''; // Usar por defecto del CSS (1 1 280px)
                 }
             }
         });
     }
+
 
 
     // Inicializar al cargar la página
