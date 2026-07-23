@@ -3,6 +3,8 @@ from app.core.database import db
 from app.knowledge.models import KnowledgeNode
 from app.tasks.models import Task
 from app.auth.utils import login_required
+import os
+import time
 
 knowledge_bp = Blueprint('knowledge', __name__)
 
@@ -33,8 +35,20 @@ def add():
         content = request.form.get('content')
         task_ids = request.form.getlist('tasks')
 
+        # Procesar archivo de imagen
+        image_file = request.files.get('image')
+        image_filename = None
+        if image_file and image_file.filename:
+            file_ext = image_file.filename.split('.')[-1].lower()
+            if file_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                upload_dir = os.path.join('app', 'static', 'uploads', 'knowledge_images')
+                os.makedirs(upload_dir, exist_ok=True)
+                filename = f"note_{u_id}_{int(time.time())}.{file_ext}"
+                image_file.save(os.path.join(upload_dir, filename))
+                image_filename = filename
+
         if title and title.strip():
-            node = KnowledgeNode(title=title.strip(), content=content, user_id=u_id)
+            node = KnowledgeNode(title=title.strip(), content=content, user_id=u_id, image_filename=image_filename)
             db.session.add(node)
             
             for t_id in task_ids:
@@ -61,6 +75,27 @@ def edit(node_id):
         content = request.form.get('content')
         task_ids = request.form.getlist('tasks')
 
+        # Procesar archivo de imagen
+        image_file = request.files.get('image')
+        if image_file and image_file.filename:
+            file_ext = image_file.filename.split('.')[-1].lower()
+            if file_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                upload_dir = os.path.join('app', 'static', 'uploads', 'knowledge_images')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Borrar imagen antigua si existe
+                if node.image_filename:
+                    old_path = os.path.join(upload_dir, node.image_filename)
+                    if os.path.exists(old_path):
+                        try:
+                            os.remove(old_path)
+                        except Exception:
+                            pass
+                            
+                filename = f"note_{u_id}_{int(time.time())}.{file_ext}"
+                image_file.save(os.path.join(upload_dir, filename))
+                node.image_filename = filename
+
         if title and title.strip():
             node.title = title.strip()
             node.content = content
@@ -78,12 +113,21 @@ def edit(node_id):
     node_task_ids = [t.id for t in node.tasks]
     return render_template('knowledge/edit.html', node=node, tasks=tasks, node_task_ids=node_task_ids)
 
+
 @knowledge_bp.route('/delete/<int:node_id>', methods=['POST', 'DELETE'])
 @login_required
 def delete(node_id):
     u_id = session['user_id']
     node = db.get_or_404(KnowledgeNode, node_id)
     if node.user_id == u_id:
+        if node.image_filename:
+            try:
+                upload_dir = os.path.join('app', 'static', 'uploads', 'knowledge_images')
+                old_path = os.path.join(upload_dir, node.image_filename)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            except Exception:
+                pass
         db.session.delete(node)
         db.session.commit()
     
@@ -91,3 +135,4 @@ def delete(node_id):
     if request.headers.get('HX-Request'):
         return render_template('knowledge/partials/list.html', nodes=nodes)
     return redirect(url_for('knowledge.index'))
+

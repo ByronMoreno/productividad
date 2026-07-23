@@ -33,6 +33,15 @@ if __name__ == '__main__':
                     db.session.rollback()
                     print(f"Nota: Columna profile_pic_filename en users ya existe o requiere verificación. ({e})")
 
+                # Asegurar columna image_filename en la tabla knowledge_nodes
+                try:
+                    db.session.execute(text("ALTER TABLE knowledge_nodes ADD COLUMN IF NOT EXISTS image_filename VARCHAR(255)"))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Nota: Columna image_filename en knowledge_nodes ya existe o requiere verificación. ({e})")
+
+
                 # Crear administrador inicial
 
                 from app.auth.models import User
