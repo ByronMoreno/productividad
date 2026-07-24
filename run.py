@@ -16,8 +16,9 @@ if __name__ == '__main__':
                 
                 # Asegurar columnas user_id en caliente si no existen
                 from sqlalchemy import text
-                tables_to_migrate = ['tasks', 'projects', 'inbox_items', 'time_blocks', 'user_status', 'knowledge_nodes']
+                tables_to_migrate = ['tasks', 'projects', 'inbox_items', 'time_blocks', 'user_status', 'knowledge_nodes', 'task_attachments']
                 for table in tables_to_migrate:
+
                     try:
                         db.session.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"))
                         db.session.commit()

@@ -227,3 +227,72 @@ def delete_daily_objective():
     return render_template('tasks/partials/daily_objective.html', daily_objective=None)
 
 
+@tasks_bp.route('/upload-attachment/<int:task_id>', methods=['POST'])
+@login_required
+def upload_attachment(task_id):
+    import os
+    import time
+    from app.tasks.models import TaskAttachment
+    u_id = session['user_id']
+    task = db.get_or_404(Task, task_id)
+    if task.user_id != u_id:
+        return "Acceso denegado", 403
+
+    files = request.files.getlist('attachments')
+    uploaded_any = False
+    
+    upload_dir = os.path.join('app', 'static', 'uploads', 'task_attachments')
+    os.makedirs(upload_dir, exist_ok=True)
+
+    for idx, file in enumerate(files):
+        if file and file.filename:
+            file_ext = file.filename.split('.')[-1].lower()
+            allowed_exts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp']
+            if file_ext in allowed_exts:
+                safe_orig_name = file.filename
+                filename = f"att_{task_id}_{int(time.time())}_{idx}.{file_ext}"
+                file.save(os.path.join(upload_dir, filename))
+                
+                attachment = TaskAttachment(
+                    filename=filename,
+                    original_filename=safe_orig_name,
+                    file_type=file_ext,
+                    task_id=task_id,
+                    user_id=u_id
+                )
+                db.session.add(attachment)
+                uploaded_any = True
+                
+    if uploaded_any:
+        db.session.commit()
+
+    return render_template('tasks/partials/attachments_list.html', task=task)
+
+
+@tasks_bp.route('/delete-attachment/<int:attachment_id>', methods=['POST', 'DELETE'])
+@login_required
+def delete_attachment(attachment_id):
+    import os
+    from app.tasks.models import TaskAttachment
+    u_id = session['user_id']
+    attachment = db.get_or_404(TaskAttachment, attachment_id)
+    task = attachment.task
+    if task.user_id != u_id:
+        return "Acceso denegado", 403
+
+    # Eliminar físicamente del servidor
+    upload_dir = os.path.join('app', 'static', 'uploads', 'task_attachments')
+    file_path = os.path.join(upload_dir, attachment.filename)
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except Exception:
+            pass
+
+    db.session.delete(attachment)
+    db.session.commit()
+
+    return render_template('tasks/partials/attachments_list.html', task=task)
+
+
+

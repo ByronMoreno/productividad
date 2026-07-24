@@ -1,0 +1,49 @@
+{% if task.attachments %}
+    <div class="list-group list-group-flush mt-2">
+        {% for att in task.attachments %}
+            <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-secondary" style="border-bottom-style: dashed !important;">
+                <div class="d-flex align-items-center min-w-0 me-2">
+                    <!-- Iconos temáticos según extensión -->
+                    {% if att.file_type in ['pdf'] %}
+                        <i data-lucide="file-text" class="text-danger me-2 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                    {% elif att.file_type in ['doc', 'docx'] %}
+                        <i data-lucide="file-text" class="text-primary me-2 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                    {% elif att.file_type in ['xls', 'xlsx'] %}
+                        <i data-lucide="file-spreadsheet" class="text-success me-2 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                    {% elif att.file_type in ['ppt', 'pptx'] %}
+                        <i data-lucide="presentation" class="text-warning me-2 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                    {% elif att.file_type in ['png', 'jpg', 'jpeg', 'gif', 'webp'] %}
+                        <i data-lucide="image" class="text-info me-2 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                    {% else %}
+                        <i data-lucide="file" class="text-zen-muted me-2 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                    {% endif %}
+
+                    <!-- Nombre original y enlace de descarga -->
+                    <a href="{{ url_for('static', filename='uploads/task_attachments/' ~ att.filename) }}" 
+                       download="{{ att.original_filename }}" 
+                       class="text-truncate small fw-medium text-primary hover-underline" 
+                       title="Descargar {{ att.original_filename }}">
+                        {{ att.original_filename }}
+                    </a>
+                </div>
+                
+                <!-- Botón de eliminación -->
+                <button class="btn btn-link text-danger p-1 rounded-circle hover-bg-danger-light border-0" 
+                        type="button"
+                        hx-delete="{{ url_for('tasks.delete_attachment', attachment_id=att.id) }}"
+                        hx-target="#task-attachments-list-{{ task.id }}"
+                        hx-confirm="¿Deseas eliminar este archivo adjunto?"
+                        title="Eliminar archivo">
+                    <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-zen-muted small mb-0 py-2">No hay documentos o fotos adjuntos en esta tarea.</p>
+{% endif %}
+
+<script>
+    // Inicializar los nuevos iconos de Lucide
+    lucide.createIcons();
+</script>

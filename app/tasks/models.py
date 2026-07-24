@@ -50,6 +50,7 @@ class Task(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=True)
     project = db.relationship('Project', backref=db.backref('tasks', lazy=True, cascade="all, delete-orphan"))
     notes = db.relationship('TaskNote', backref='task', lazy=True, cascade="all, delete-orphan", order_by="TaskNote.created_at.desc()")
+    attachments = db.relationship('TaskAttachment', backref='task', lazy=True, cascade="all, delete-orphan", order_by="TaskAttachment.created_at.desc()")
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
 
 
@@ -81,4 +82,24 @@ class TaskNote(db.Model):
             utc_dt = self.created_at.replace(tzinfo=timezone.utc)
             return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
         return None
+
+class TaskAttachment(db.Model):
+    __tablename__ = 'task_attachments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_type = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
+
+    @property
+    def created_at_local(self):
+        if self.created_at:
+            utc_dt = self.created_at.replace(tzinfo=timezone.utc)
+            return utc_dt.astimezone(ZoneInfo('America/Guayaquil'))
+        return None
+
 
