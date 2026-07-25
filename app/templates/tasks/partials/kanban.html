@@ -226,12 +226,12 @@
                             <div class="modal fade" id="editTaskModal{{ task.id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
-                                        <form hx-post="{{ url_for('tasks.edit', task_id=task.id) }}" 
+                                        <form id="editTaskForm{{ task.id }}" 
+                                              hx-post="{{ url_for('tasks.edit', task_id=task.id) }}" 
                                               hx-target="#kanban-board" 
                                               hx-swap="innerHTML"
                                               hx-on::after-request="try { bootstrap.Modal.getInstance(document.getElementById('editTaskModal{{ task.id }}')).hide(); } catch(e) {} document.querySelectorAll('.modal-backdrop').forEach(el => el.remove()); document.body.classList.remove('modal-open'); document.body.style.overflow = ''; document.body.style.paddingRight = '';">
                                             <div class="modal-header">
-
                                                 <h5 class="modal-title fw-bold"><i data-lucide="edit" class="text-primary me-2"></i>Detalle / Editar Tarea</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -268,44 +268,47 @@
                                                             <option value="PROGRESS" {% if task.status == 'PROGRESS' %}selected{% endif %}>En Proceso</option>
                                                             <option value="WAITING" {% if task.status == 'WAITING' %}selected{% endif %}>Esperando</option>
                                                             <option value="DONE" {% if task.status == 'DONE' %}selected{% endif %}>Completado</option>
-                                                    </select>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">Tiempo Estimado (min)</label>
+                                                        <input type="number" class="form-control" name="estimated_time" value="{{ task.estimated_time }}" min="5" step="5" required>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">Prioridad</label>
+                                                        <select class="form-select" name="priority">
+                                                            <option value="LOW" {% if task.priority == 'LOW' %}selected{% endif %}>Baja</option>
+                                                            <option value="MEDIUM" {% if task.priority == 'MEDIUM' %}selected{% endif %}>Media</option>
+                                                            <option value="HIGH" {% if task.priority == 'HIGH' %}selected{% endif %}>Alta</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">Energía (1-5★)</label>
+                                                        <select class="form-select" name="energy">
+                                                            <option value="1" {% if task.energy == 1 %}selected{% endif %}>1★ (Muy Baja)</option>
+                                                            <option value="2" {% if task.energy == 2 %}selected{% endif %}>2★</option>
+                                                            <option value="3" {% if task.energy == 3 %}selected{% endif %}>3★</option>
+                                                            <option value="4" {% if task.energy == 4 %}selected{% endif %}>4★</option>
+                                                            <option value="5" {% if task.energy == 5 %}selected{% endif %}>5★ (Muy Alta)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold text-danger">Fecha de Fin (Deadline obligatorio)</label>
+                                                        <input type="date" class="form-control border-danger" name="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
+                                                    </div>
                                                 </div>
                                             </div>
+                                        </form>
 
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Tiempo Estimado (min)</label>
-                                                    <input type="number" class="form-control" name="estimated_time" value="{{ task.estimated_time }}" min="5" step="5" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Prioridad</label>
-                                                    <select class="form-select" name="priority">
-                                                        <option value="LOW" {% if task.priority == 'LOW' %}selected{% endif %}>Baja</option>
-                                                        <option value="MEDIUM" {% if task.priority == 'MEDIUM' %}selected{% endif %}>Media</option>
-                                                        <option value="HIGH" {% if task.priority == 'HIGH' %}selected{% endif %}>Alta</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Energía (1-5★)</label>
-                                                    <select class="form-select" name="energy">
-                                                        <option value="1" {% if task.energy == 1 %}selected{% endif %}>1★ (Muy Baja)</option>
-                                                        <option value="2" {% if task.energy == 2 %}selected{% endif %}>2★</option>
-                                                        <option value="3" {% if task.energy == 3 %}selected{% endif %}>3★</option>
-                                                        <option value="4" {% if task.energy == 4 %}selected{% endif %}>4★</option>
-                                                        <option value="5" {% if task.energy == 5 %}selected{% endif %}>5★ (Muy Alta)</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold text-danger">Fecha de Fin (Deadline obligatorio)</label>
-                                                    <input type="date" class="form-control border-danger" name="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
-                                                </div>
-                                            </div>
-
+                                        <div class="modal-body text-start pt-0">
                                             <!-- Documentos y Fotos Adjuntos -->
-                                            <div class="border-top pt-3 mt-3">
+                                            <div class="border-top pt-3">
                                                 <h6 class="fw-bold mb-2 text-primary">
                                                     <i data-lucide="paperclip" class="me-1 text-primary" style="width: 14px; height: 14px; vertical-align: middle;"></i>Archivos y Fotos Adjuntos
                                                 </h6>
@@ -366,13 +369,12 @@
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-light border-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-zen">Guardar Cambios</button>
+                                            <button type="submit" form="editTaskForm{{ task.id }}" class="btn btn-zen">Guardar Cambios</button>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
                     
                     {% if not kanban[status] %}
                         <div class="text-center py-5 text-zen-muted small">Vacío</div>
